@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="TileEditorTest.DocumentsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:TileEditorTest"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+
+    <TabView x:Name="Tabs" AllowDropTabs="True" CanReorderTabs="True" CanDragTabs="True" 
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch"
+                    TabDroppedOutside="Tabs_TabDroppedOutside"
+                             TabStripDragOver="Tabs_TabStripDragOver"
+                             TabStripDrop="Tabs_TabStripDrop"
+                             TabDragStarting="Tabs_TabDragStarting"   
+                      AddTabButtonClick="Tabs_AddTabButtonClick"
+                             TabCloseRequested="Tabs_TabCloseRequested"
+             
+                 >
+
+
+
+    </TabView>
+</Page>

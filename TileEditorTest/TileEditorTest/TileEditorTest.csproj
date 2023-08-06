@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net7.0-windows10.0.19041.0</TargetFramework>
+		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+		<RootNamespace>TileEditorTest</RootNamespace>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<Platforms>x86;x64;ARM64</Platforms>
+		<RuntimeIdentifiers>win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
+		<UseWinUI>true</UseWinUI>
+	</PropertyGroup>
+	<ItemGroup>
+	  <None Remove="DocumentsPage.xaml" />
+	  <None Remove="TileMapEditorControl.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Core" Version="7.1.2" />
+		<PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Layout" Version="7.1.2" />
+		<PackageReference Include="Microsoft.Graphics.Win2D" Version="1.0.5.1" />
+
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.3.230502000" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.755" />
+		<Manifest Include="$(ApplicationManifest)" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="DocumentsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="TileMapEditorControl.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
+</Project>

@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33829.357
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "TileEditorTest (Package)", "TileEditorTest\TileEditorTest (Package)\TileEditorTest (Package).wapproj", "{2B79D212-ECA9-4819-AC06-9E473BB47280}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TileEditorTest", "TileEditorTest\TileEditorTest\TileEditorTest.csproj", "{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM64 = Debug|ARM64
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|ARM64 = Release|ARM64
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Debug|ARM64.Build.0 = Debug|ARM64
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Debug|ARM64.Deploy.0 = Debug|ARM64
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Debug|x64.ActiveCfg = Debug|x64
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Debug|x64.Build.0 = Debug|x64
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Debug|x64.Deploy.0 = Debug|x64
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Debug|x86.ActiveCfg = Debug|x86
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Debug|x86.Build.0 = Debug|x86
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Debug|x86.Deploy.0 = Debug|x86
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Release|ARM64.ActiveCfg = Release|ARM64
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Release|ARM64.Build.0 = Release|ARM64
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Release|ARM64.Deploy.0 = Release|ARM64
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Release|x64.ActiveCfg = Release|x64
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Release|x64.Build.0 = Release|x64
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Release|x64.Deploy.0 = Release|x64
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Release|x86.ActiveCfg = Release|x86
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Release|x86.Build.0 = Release|x86
+		{2B79D212-ECA9-4819-AC06-9E473BB47280}.Release|x86.Deploy.0 = Release|x86
+		{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}.Debug|ARM64.Build.0 = Debug|ARM64
+		{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}.Debug|x64.ActiveCfg = Debug|x64
+		{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}.Debug|x64.Build.0 = Debug|x64
+		{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}.Debug|x86.ActiveCfg = Debug|x86
+		{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}.Debug|x86.Build.0 = Debug|x86
+		{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}.Release|ARM64.ActiveCfg = Release|ARM64
+		{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}.Release|ARM64.Build.0 = Release|ARM64
+		{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}.Release|x64.ActiveCfg = Release|x64
+		{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}.Release|x64.Build.0 = Release|x64
+		{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}.Release|x86.ActiveCfg = Release|x86
+		{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7A45EEB7-4A20-47D5-BBB6-8E1609089277}
+	EndGlobalSection
+EndGlobal
