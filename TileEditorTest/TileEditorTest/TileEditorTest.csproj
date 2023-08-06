@@ -8,7 +8,11 @@
 		<Platforms>x86;x64;ARM64</Platforms>
 		<RuntimeIdentifiers>win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
 		<UseWinUI>true</UseWinUI>
+		<Nullable>enable</Nullable>
 	</PropertyGroup>
+	<ItemGroup>
+	  <Content Remove="terrain_atlas.png" />
+	</ItemGroup>
 	<ItemGroup>
 	  <None Remove="DocumentsPage.xaml" />
 	  <None Remove="TileMapEditorControl.xaml" />
@@ -22,6 +26,12 @@
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.3.230502000" />
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.755" />
 		<Manifest Include="$(ApplicationManifest)" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="terrain_atlas.png">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 	<ItemGroup>

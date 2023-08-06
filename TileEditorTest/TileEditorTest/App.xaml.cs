@@ -46,5 +46,9 @@ public partial class App : Application
         m_window.Activate();
     }
 
-    private Window m_window;
+    private Window? m_window;
+
+    public static new App Current => (App)Application.Current;
+
+    public Window MainWindow => m_window?? throw new InvalidOperationException("The app is not jet initilized");
 }

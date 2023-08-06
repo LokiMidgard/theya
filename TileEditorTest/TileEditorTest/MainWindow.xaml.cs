@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Navigation;
 
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 
 using Windows.Foundation.Collections;
@@ -23,10 +24,13 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         this.InitializeComponent();
+        this.Closed += (sender, e) =>
+        {
+            foreach (var window in WindowHelper.ActiveWindows.ToArray())
+            {
+                window.Close();
+            }
+        };
     }
 
-    private void myButton_Click(object sender, RoutedEventArgs e)
-    {
-        myButton.Content = "Clicked";
-    }
 }

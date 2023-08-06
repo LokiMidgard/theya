@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
+
 using TileEditorTest.Model;
 
 using TileEditorTest.Viewmodel;
@@ -20,6 +21,7 @@ using TileEditorTest.Viewmodel;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Storage.Pickers;
 
 using DispatcherQueueHandler = Microsoft.UI.Dispatching.DispatcherQueueHandler;
 
@@ -227,13 +229,24 @@ public sealed partial class DocumentsPage : Page
         }
     }
 
-    private void Tabs_AddTabButtonClick(TabView sender, object args)
+    private async void Tabs_AddTabButtonClick(TabView sender, object args)
     {
+        var dialog = new FileOpenPicker();
+
+        var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(WindowHelper.GetWindowForElement(this) ?? App.Current.MainWindow);
+        WinRT.Interop.InitializeWithWindow.Initialize(dialog, hWnd);
+
+        dialog.FileTypeFilter.Add(".png");
+        var result = await dialog.PickSingleFileAsync();
+        if (result is null)
+        {
+            return;
+        }
         var vm = new TileMapEditorViewmodel(new Windows.Graphics.SizeInt32(32, 32))
         {
             Width = 32,
             Heigeht = 32,
-            TileSets = ImmutableList.Create(new TileSetModel() { Path = "terrain_atlas.png", TileSize = new Windows.Graphics.SizeInt32(32, 32) })
+            TileSets = ImmutableList.Create(new TileSetModel() { Path = result.Path, TileSize = new Windows.Graphics.SizeInt32(32, 32) })
         };
         var tab = CreateNewTVI("New Item", vm);
         sender.TabItems.Add(tab);
