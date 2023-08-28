@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net7.0-windows10.0.19041.0</TargetFramework>
+		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
 		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
 		<RootNamespace>TileEditorTest</RootNamespace>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
@@ -11,14 +11,27 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 	<ItemGroup>
-	  <Content Remove="terrain_atlas.png" />
-	</ItemGroup>
-	<ItemGroup>
-	  <None Remove="DocumentsPage.xaml" />
-	  <None Remove="TileMapEditorControl.xaml" />
+		<None Remove="View\DocumentsPage.xaml" />
+		<None Remove="TileMapEditorControl.xaml" />
+		<None Remove="TileSetEditorControl.xaml" />
+		<None Remove="View\Dialogs\ClosedUnsavedChangesInfo.xaml" />
+		<None Remove="View\Dialogs\NewFileDialogContent.xaml" />
+		<None Remove="View\MainView.xaml" />
+		<None Remove="View\Editors\TileSetEditor.xaml" />
+		<None Remove="View\ViewLoader.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="AutoInvoke.Generator" Version="0.0.9">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="PropertyChanged.SourceGenerator" Version="1.0.8">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Supernova.Enum.Generators" Version="1.0.13" />
+		
 		<PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Core" Version="7.1.2" />
 		<PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Layout" Version="7.1.2" />
 		<PackageReference Include="Microsoft.Graphics.Win2D" Version="1.0.5.1" />
@@ -29,19 +42,62 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Include="terrain_atlas.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
+		<None Include="..\..\.editorconfig" Link=".editorconfig" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Page Update="DocumentsPage.xaml">
+		<Page Update="TileSetEditorControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Page Update="View\DocumentsPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Page Update="TileMapEditorControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Page Update="View\MainView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+		<CustomAdditionalCompileInputs Remove="View\Editors\TileSetEditor.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Resource Remove="View\Editors\TileSetEditor.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <CustomAdditionalCompileInputs Remove="View\ViewLoader.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Resource Remove="View\ViewLoader.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="View\Dialogs\NewFileDialogContent.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Page Update="TileMapEditorControl.xaml">
+	  <Folder Include="ViewModel\NewFolder\" />
+	  <Folder Include="View\Editors\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="View\Dialogs\ClosedUnsavedChangesInfo.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
 	</ItemGroup>

@@ -1,0 +1,45 @@
+﻿<InfoBar
+    x:Class="TileEditorTest.View.Dialogs.ClosedUnsavedChangesInfo"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:TileEditorTest.View.Dialogs"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:numerics="using:System.Numerics"
+    Closed="InfoBar_Closed"
+    Severity="Warning"
+    HorizontalAlignment="Stretch"
+    Title="Closed File with unsafed changes" 
+    Message="{x:Bind MessageText}"
+    mc:Ignorable="d">
+
+    <InfoBar.Resources>
+        <Storyboard x:Name="progress">
+            <DoubleAnimation
+    Storyboard.TargetName="scale"
+    Storyboard.TargetProperty="ScaleX"
+    From="0.0"
+    To="1.0"
+    Duration="0:0:15"
+    />
+        </Storyboard>
+    </InfoBar.Resources>
+    <InfoBar.ActionButton>
+        <Button  Click="AppBarButton_Click"  HorizontalAlignment="Right" >
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Restore"></TextBlock>
+                <Viewbox Height="20">
+                    <SymbolIcon Margin="8,8,8,8" Symbol="Undo" ></SymbolIcon>
+                </Viewbox>
+            </StackPanel>
+        </Button>
+    </InfoBar.ActionButton>
+
+
+    <Rectangle HorizontalAlignment="Stretch"  Height="4" Fill="{ThemeResource SystemFillColorCautionBrush}">
+        <Rectangle.RenderTransform>
+            <ScaleTransform x:Name="scale" ScaleX="1"  />
+        </Rectangle.RenderTransform>
+    </Rectangle>
+
+
+</InfoBar>

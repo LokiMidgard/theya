@@ -1,0 +1,24 @@
+﻿<TabViewItem
+    x:Class="TileEditorTest.View.ViewLoader"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:TileEditorTest.View"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:helper="using:TileEditorTest.Helper"
+    mc:Ignorable="d"
+    
+    IconSource="{x:Bind Item.Type, Converter={StaticResource IconConverter}}"
+    
+    >
+    <TabViewItem.Header>
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Margin="0,0,4,0" Text="◉"  Visibility="{x:Bind ContentViewModel.HasChanges,Mode=OneWay}" Foreground="{ThemeResource AccentAAFillColorTertiaryBrush}" />
+            <TextBlock Text="{x:Bind Item.Path.Name, Mode=OneWay}" />
+        </StackPanel>
+    </TabViewItem.Header>
+
+    <Grid>
+        <ProgressRing IsActive="{x:Bind IsLoading,Mode=OneWay}" Visibility="{x:Bind IsLoading}" ></ProgressRing>
+        <ContentControl HorizontalContentAlignment="Stretch" Content="{x:Bind Control, Mode=OneWay}" ></ContentControl>
+    </Grid>
+</TabViewItem>

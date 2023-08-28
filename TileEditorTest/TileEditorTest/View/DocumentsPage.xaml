@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="TileEditorTest.View.DocumentsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:TileEditorTest"
+    xmlns:viewControls="using:TileEditorTest.View.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:model="using:TileEditorTest.Model" xmlns:controlsComunity="using:CommunityToolkit.WinUI.UI.Controls"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" >
+
+    <Grid>
+
+
+        <controlsComunity:DockPanel  x:Name="dock" >
+
+            <controlsComunity:TabbedCommandBar controlsComunity:DockPanel.Dock="Top" IsPaneOpen="False" >
+                <controlsComunity:TabbedCommandBar.MenuItems>
+                    <!--<controlsComunity:TabbedCommandBarItem Header="Common">
+                     
+                </controlsComunity:TabbedCommandBarItem>-->
+                </controlsComunity:TabbedCommandBar.MenuItems>
+                <controlsComunity:TabbedCommandBar.PaneHeader>
+                    <CommandBar Background="Transparent" DefaultLabelPosition="Right" >
+                        <AppBarButton IsHitTestVisible="False" Visibility="{x:Bind IndentMenu, Converter={StaticResource BoolVisibilityConverter}}"></AppBarButton>
+                        <AppBarButton Label="Save" Command="{x:Bind SelectedViewLoader.ContentViewModel.Save, Mode=OneWay}" Icon="Save"  Visibility="{x:Bind SelectedViewLoader.ContentViewModel.Save, Mode=OneWay, FallbackValue=Collapsed,  Converter={StaticResource NullToHiddenConverter}}"/>
+                    </CommandBar>
+                </controlsComunity:TabbedCommandBar.PaneHeader>
+
+            </controlsComunity:TabbedCommandBar>
+
+
+            <TabView x:Name="Tabs" AllowDropTabs="True" CanReorderTabs="True" CanDragTabs="True"   IsAddTabButtonVisible="False"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            TabDroppedOutside="Tabs_TabDroppedOutside"
+            TabStripDragOver="Tabs_TabStripDragOver"
+            TabStripDrop="Tabs_TabStripDrop"
+            TabDragStarting="Tabs_TabDragStarting"   
+            SelectionChanged="Tabs_SelectionChanged"
+            TabCloseRequested="Tabs_TabCloseRequested"
+        />
+
+
+        </controlsComunity:DockPanel>
+        <viewControls:NotificationArea />
+    </Grid>
+
+</Page>

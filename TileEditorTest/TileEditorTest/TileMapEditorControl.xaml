@@ -9,6 +9,37 @@
     mc:Ignorable="d">
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition></ColumnDefinition>
+            <ColumnDefinition Width="Auto" ></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        
+        <ContentControl 
+            Grid.ColumnSpan="2"
+            Grid.RowSpan="2"
+            HorizontalAlignment="Stretch" 
+            VerticalAlignment="Stretch" 
+            HorizontalContentAlignment="Stretch"
+            VerticalContentAlignment="Stretch"
+            x:Name="canvasHolder"></ContentControl>
 
+        <ScrollBar
+            x:Name="verticalScroll"
+            Scroll="scrollChanged"
+            SmallChange="1"
+            LargeChange="16"
+            IndicatorMode="MouseIndicator" Grid.Column="1"/>
+        <ScrollBar
+            x:Name="horizontlScroll"
+            Scroll="scrollChanged"
+            SmallChange="1"
+            LargeChange="16"
+            IndicatorMode="MouseIndicator"
+            Orientation="Horizontal" 
+                   Grid.Row="1"/>
     </Grid>
 </UserControl>

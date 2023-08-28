@@ -5,7 +5,12 @@ VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "TileEditorTest (Package)", "TileEditorTest\TileEditorTest (Package)\TileEditorTest (Package).wapproj", "{2B79D212-ECA9-4819-AC06-9E473BB47280}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TileEditorTest", "TileEditorTest\TileEditorTest\TileEditorTest.csproj", "{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TileEditorTest", "TileEditorTest\TileEditorTest\TileEditorTest.csproj", "{11D4D7B1-149A-4D0F-80A6-AFC741EBFAB2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E5696C04-ED09-4BE6-A9B2-A9322686F7B6}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
