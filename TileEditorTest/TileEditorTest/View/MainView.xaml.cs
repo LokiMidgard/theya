@@ -86,4 +86,16 @@ public sealed partial class MainView : UserControl, INotifyPropertyChanged {
     private void NavigationView_DisplayModeChanged(NavigationView sender, NavigationViewDisplayModeChangedEventArgs args) {
         this.IsMenuCompact = args.DisplayMode == NavigationViewDisplayMode.Minimal;
     }
+
+    private void TreeViewItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e) {
+        var item = (TreeViewItem)sender;
+        var vm = (ProjectTreeElementViewModel)item.DataContext;
+        if (vm.OpenCommand?.CanExecute(null) ?? false) {
+            vm.OpenCommand.Execute(null);
+        }
+    }
+
+    private void NavigationView_SizeChanged(object sender, SizeChangedEventArgs e) {
+        this.projectTree.Height = e.NewSize.Height - 150;
+    }
 }

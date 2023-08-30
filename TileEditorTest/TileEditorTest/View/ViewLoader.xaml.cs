@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
@@ -34,10 +35,37 @@ public sealed partial class ViewLoader : TabViewItem, IDisposable {
     /// </summary>
     private bool disableUpdate;
 
-    private readonly ImmutableDictionary<Type, Func<ProjectItem, ProjectViewModel, Task<IViewModel>>> loadersViewModel;
-    private readonly ImmutableDictionary<Type, Func<IViewModel, Control>> loadersView;
+    private static readonly ImmutableDictionary<Type, Func<ProjectItem, ProjectViewModel, Task<IViewModel>>> loadersViewModel;
+    private static readonly ImmutableDictionary<Type, Func<IViewModel, Control>> loadersView;
+    private static readonly ImmutableHashSet<Type> supportedProjectItems;
 
+    static ViewLoader() {
+        loadersViewModel = GetView().ToImmutableDictionary(x => x.fileType, x => new Func<ProjectItem, ProjectViewModel, Task<IViewModel>>((item, vm) => x.createViewModel(item, vm)));
+        loadersView = GetView().ToImmutableDictionary(x => x.viewModelType, x => new Func<IViewModel, Control>((vm) => x.createView(vm)));
+        supportedProjectItems = GetView().Select(x => x.projectItem).ToImmutableHashSet();
+    }
 
+    [AutoInvoke.FindAndInvoke]
+    private static (Type fileType, Type viewModelType, Type projectItem, Func<ProjectItem, ProjectViewModel, Task<IViewModel>> createViewModel, Func<IViewModel, Control> createView) GetView<View, VM, OfFile>()
+    where OfFile : class, IProjectItemContent<OfFile>
+    where VM : IViewModel<OfFile, VM>
+    where View : Control, IView<OfFile, VM, View> {
+
+        return (fileType: typeof(OfFile), viewModelType: typeof(VM), typeof(ProjectItem<OfFile>),
+            async (f, vm) => {
+                return await VM.Create((ProjectItem<OfFile>)f, vm);
+            }, (vm) => {
+                return View.Create((VM)vm);
+            }
+        );
+    }
+
+    internal static bool IsSupported<ProjectItem>() {
+        return supportedProjectItems.Contains(typeof(ProjectItem));
+    }
+    internal static bool IsSupported(ProjectItem item) {
+        return supportedProjectItems.Contains(item.GetType());
+    }
 
 
     internal IViewModel? ContentViewModel {
@@ -121,7 +149,7 @@ public sealed partial class ViewLoader : TabViewItem, IDisposable {
         if (newItem is not null && ProjectViewModel is not null) {
             if (!existingViewmodels.TryGetValue(newItem.Path, out var fonud)) {
                 var content = await newItem.Content;
-                var createViewModel = this.loadersViewModel[content.GetType()];
+                var createViewModel = loadersViewModel[content.GetType()];
                 fonud = (await createViewModel(newItem, ProjectViewModel), 1);
             } else {
                 fonud = (fonud.model, fonud.count + 1);
@@ -130,7 +158,7 @@ public sealed partial class ViewLoader : TabViewItem, IDisposable {
                 existingViewmodels[newItem.Path] = fonud;
                 var (vm, counter) = fonud;
                 this.ContentViewModel = vm;
-                var createControl = this.loadersView[vm.GetType()];
+                var createControl = loadersView[vm.GetType()];
                 var control = createControl(vm);
                 this.Control = control;
             }
@@ -152,26 +180,13 @@ public sealed partial class ViewLoader : TabViewItem, IDisposable {
         }
     }
 
+
+
+
     public ViewLoader() {
-        this.loadersViewModel = this.GetView().ToImmutableDictionary(x => x.fileType, x => new Func<ProjectItem, ProjectViewModel, Task<IViewModel>>((item, vm) => x.createViewModel(item, vm)));
-        this.loadersView = this.GetView().ToImmutableDictionary(x => x.viewModelType, x => new Func<IViewModel, Control>((vm) => x.createView(vm)));
         this.InitializeComponent();
     }
 
-    [AutoInvoke.FindAndInvoke]
-    private (Type fileType, Type viewModelType, Func<ProjectItem, ProjectViewModel, Task<IViewModel>> createViewModel, Func<IViewModel, Control> createView) GetView<View, VM, OfFile>()
-    where OfFile : class, IProjectItemContent<OfFile>
-    where VM : IViewModel<OfFile, VM>
-    where View : Control, IView<OfFile, VM, View> {
-
-        return (fileType: typeof(OfFile), viewModelType: typeof(VM),
-            async (f, vm) => {
-                return await VM.Create((ProjectItem<OfFile>)f, vm);
-            }, (vm) => {
-                return View.Create((VM)vm);
-            }
-        );
-    }
 
 
 

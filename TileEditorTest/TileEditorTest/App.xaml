@@ -22,6 +22,12 @@
             <helper:EmptyCollectionsHiddenConverter  x:Key="EmptyCollectionsConverter" />
             <helper:NullToHiddenConverter  x:Key="NullToHiddenConverter" />
             <helper:BoolVisibilityConverter   x:Key="BoolVisibilityConverter" />
+            <helper:ReturnParameterOnTrueConverter x:Key="ReturnParameterOnTrueConverter" />
+
+            <SolidColorBrush x:Key="WindowCaptionBackground">Transparent</SolidColorBrush>
+            <!--<SolidColorBrush x:Key="WindowCaptionBackgroundDisabled">LightGreen</SolidColorBrush>-->
+            <!--<SolidColorBrush x:Key="WindowCaptionForeground">Red</SolidColorBrush>
+            <SolidColorBrush x:Key="WindowCaptionForegroundDisabled">Pink</SolidColorBrush>-->
 
             <Style x:Key="CommandStyle" TargetType="ContentDialog">
                 <Setter Property="Foreground" Value="{ThemeResource ContentDialogForeground}" />

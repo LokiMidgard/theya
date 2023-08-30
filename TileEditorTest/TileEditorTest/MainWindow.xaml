@@ -9,5 +9,5 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <view:MainView  HorizontalAlignment="Stretch" />
+    <view:MainView  x:Name="mainView" HorizontalAlignment="Stretch" />
 </Window>

@@ -1,3 +1,5 @@
+using CommunityToolkit.WinUI.UI;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -28,19 +30,21 @@ namespace TileEditorTest;
 /// <summary>
 /// An empty window that can be used on its own or navigated to within a Frame.
 /// </summary>
-public sealed partial class MainWindow : Window
-{ 
-    public MainWindow()
-    {
+public sealed partial class MainWindow : Window {
+    public MainWindow() {
         this.InitializeComponent();
         this.SystemBackdrop = new MicaBackdrop();
-        this.Closed += (sender, e) =>
-        {
-            foreach (var window in App.ActiveWindows.ToArray())
-            {
+        this.ExtendsContentIntoTitleBar = true;
+        mainView.Loaded += MainView_Loaded;
+        this.Closed += (sender, e) => {
+            foreach (var window in App.ActiveWindows.ToArray()) {
                 window.Close();
             }
         };
     }
 
+    private void MainView_Loaded(object sender, RoutedEventArgs e) {
+        FrameworkElement? titleBar = this.Content.FindDescendant("AppTitleBar");
+        SetTitleBar(titleBar);
+    }
 }

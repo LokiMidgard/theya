@@ -12,10 +12,16 @@
 
     <Grid>
 
-
         <controlsComunity:DockPanel  x:Name="dock" >
 
-            <controlsComunity:TabbedCommandBar controlsComunity:DockPanel.Dock="Top" IsPaneOpen="False" >
+            <controlsComunity:TabbedCommandBar x:Name="commandBar" controlsComunity:DockPanel.Dock="Top" IsPaneOpen="False" SizeChanged="TabbedCommandBar_SizeChanged" >
+                <!--<controlsComunity:TabbedCommandBar.PaneFooter>
+                </controlsComunity:TabbedCommandBar.PaneFooter>-->
+                <controlsComunity:TabbedCommandBar.PaneCustomContent>
+                    <Border x:Name="AppTitleBar" HorizontalAlignment="Stretch"  Background="Transparent" VerticalAlignment="Top"  Height="38" >
+                  
+                    </Border>
+                </controlsComunity:TabbedCommandBar.PaneCustomContent>
                 <controlsComunity:TabbedCommandBar.MenuItems>
                     <!--<controlsComunity:TabbedCommandBarItem Header="Common">
                      
@@ -45,6 +51,8 @@
 
         </controlsComunity:DockPanel>
         <viewControls:NotificationArea />
+        
+
     </Grid>
 
 </Page>

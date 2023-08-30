@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using TileEditorTest.Helper;
 using TileEditorTest.Helper.MemoryExtension;
 using TileEditorTest.Model;
+using TileEditorTest.View;
 using TileEditorTest.View.Dialogs;
 
 using Windows.ApplicationModel.Chat;
@@ -262,9 +263,10 @@ public partial class ProjectTreeElementViewModel {
 
     public ProjectItemType Type { get; }
 
+    public bool HasCommands => OpenCommand != null || CreateCommands.Length > 0;
 
     public string Name { get; }
-    public XamlUICommand OpenCommand { get; }
+    public XamlUICommand? OpenCommand { get; }
     public ImmutableArray<XamlUICommand> CreateCommands { get; }
 
     public ProjectItem Content { get; }
@@ -285,12 +287,14 @@ public partial class ProjectTreeElementViewModel {
         this.CreateCommands = content.Type == ProjectItemType.Folder
             ? CreateCommand().ToImmutableArray()
             : ImmutableArray<XamlUICommand>.Empty;
+        if (ViewLoader.IsSupported(content)) {
 
-        StandardUICommand openCommand = new(StandardUICommandKind.Open);
-        openCommand.ExecuteRequested += async (sender, e) => {
-            await Project.OpenFile(this.Content);
-        };
-        this.OpenCommand = openCommand;
+            StandardUICommand openCommand = new(StandardUICommandKind.Open);
+            openCommand.ExecuteRequested += async (sender, e) => {
+                await Project.OpenFile(this.Content);
+            };
+            this.OpenCommand = openCommand;
+        }
     }
 
     [AutoInvoke.FindAndInvoke]

@@ -57,8 +57,7 @@ public sealed partial class ClosedUnsavedChangesInfo : InfoBar {
             IsOpen = true,
         };
 
-        var window = App.GetWindowForElement(element) ?? throw new ArgumentException("Could not find Window for element.", nameof(element));
-        var notificationArea = window.Content.FindDescendantOrSelf<NotificationArea>() ?? throw new ArgumentException("Could not find NotificationArea for element.", nameof(element));
+        var notificationArea = App.GetNotificationAreaForElement(element);
         notificationArea.Children.Add(dialog);
         await Task.WhenAny(dialog.Start(), dialog.dismiss.Task);
 

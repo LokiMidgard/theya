@@ -14,12 +14,13 @@ using TileEditorTest.ViewModel;
 namespace TileEditorTest.Helper;
 
 internal class ProjectItemToIconSourceConverter : IValueConverter {
-    private static SymbolIconSource mapSymbol = new SymbolIconSource() { Symbol = Symbol.Map };
-    private static SymbolIconSource picturesSymbol = new SymbolIconSource() { Symbol = Symbol.Pictures };
-    private static SymbolIconSource audioSymbol = new SymbolIconSource() { Symbol = Symbol.Audio };
-    private static SymbolIconSource folderSymbol = new SymbolIconSource() { Symbol = Symbol.Folder };
-    private static SymbolIconSource tileSetSymbol = new SymbolIconSource() { Symbol = Symbol.ViewAll };
-    private static SymbolIconSource otherSymbol = new SymbolIconSource() { Symbol = Symbol.Page };
+    private static SymbolIconSource mapSymbol = new() { Symbol = Symbol.Map };
+    private static SymbolIconSource picturesSymbol = new() { Symbol = Symbol.Pictures };
+    private static SymbolIconSource audioSymbol = new() { Symbol = Symbol.Audio };
+    private static SymbolIconSource folderSymbol = new() { Symbol = Symbol.Folder };
+    private static SymbolIconSource tileSetSymbol = new() { Symbol = Symbol.ViewAll };
+    private static SymbolIconSource otherSymbol = new() { Symbol = Symbol.Page };
+
 
     public object Convert(object value, Type targetType, object parameter, string language) {
         if (value is not ProjectItemType itemType) {

@@ -15,8 +15,9 @@ internal class NotificationArea : StackPanel {
         HorizontalAlignment = Microsoft.UI.Xaml.HorizontalAlignment.Stretch;
         VerticalAlignment = Microsoft.UI.Xaml.VerticalAlignment.Bottom;
 
-        Microsoft.UI.Xaml.Media.Animation.TransitionCollection transitionCollection = new();
-        transitionCollection.Add(new Microsoft.UI.Xaml.Media.Animation.AddDeleteThemeTransition());
+        Microsoft.UI.Xaml.Media.Animation.TransitionCollection transitionCollection = new() {
+            new Microsoft.UI.Xaml.Media.Animation.AddDeleteThemeTransition()
+        };
         this.ChildrenTransitions = transitionCollection;
 
     }

@@ -1,3 +1,4 @@
+using CommunityToolkit.WinUI.UI;
 using CommunityToolkit.WinUI.UI.Controls;
 
 using Microsoft.UI.Xaml;
@@ -58,7 +59,7 @@ public sealed partial class DocumentsPage : Page {
         Tabs.SelectedIndex = Tabs.TabItems.Count - 1;
     }
 
-    
+
 
     protected override void OnNavigatedTo(NavigationEventArgs e) {
         base.OnNavigatedTo(e);
@@ -75,9 +76,7 @@ public sealed partial class DocumentsPage : Page {
         Tabs.TabItems.Remove(args.Tab);
         newPage.Tabs.TabItems.Add(args.Tab);
 
-        var newWindow = App.CreateWindow();
-        newWindow.ExtendsContentIntoTitleBar = true;
-        newWindow.Content = newPage;
+        var newWindow = App.CreateWindow(newPage);
 
         newWindow.Activate();
     }
@@ -172,5 +171,35 @@ public sealed partial class DocumentsPage : Page {
 
     private void Tabs_SelectionChanged(object sender, SelectionChangedEventArgs e) {
         SelectedViewLoader = (ViewLoader?)Tabs.SelectedItem;
+    }
+
+    private void TabbedCommandBar_SizeChanged(object sender, SizeChangedEventArgs e) {
+        IEnumerable<double> list = commandBar.MenuItems.OfType<TabbedCommandBarItem>()
+                    .Select(GetRight)
+                    .Append(GetRight((FrameworkElement)commandBar.PaneHeader))
+                    .Append(1)
+                    .ToArray();
+        var mostRightPoint = list
+            .Max();
+
+        //var newWidth = this.ActualWidth - mostRightPoint;
+
+        //this.AppTitleBar.Width = newWidth;
+
+        double GetRight(FrameworkElement x) {
+
+
+            if (x.Parent is not UIElement parent) {
+                return 0;
+            }
+
+            GeneralTransform generalTransform = parent.TransformToVisual(this);
+            //var visual = x.GetVisual();
+            var visual = x;
+            Point input = new Point(visual.ActualSize.X + visual.ActualOffset.X, 0);
+            Point reslut = generalTransform.TransformPoint(input);
+            
+            return reslut.X;
+        }
     }
 }

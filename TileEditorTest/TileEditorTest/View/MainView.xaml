@@ -8,25 +8,27 @@
     xmlns:viewmodel="using:TileEditorTest.ViewModel"
     xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:animatedvisuals="using:ABI.Microsoft.UI.Xaml.Controls.AnimatedVisuals"
     mc:Ignorable="d" HorizontalAlignment="Stretch" >
 
 
-    <NavigationView IsBackButtonVisible="Collapsed"  DisplayModeChanged="NavigationView_DisplayModeChanged" >
-        <NavigationView.PaneHeader>
-            <StackPanel>
-                <CommandBar >
-                    <AppBarButton Icon="OpenFile" Click="AppBarButton_Click"></AppBarButton>
-                </CommandBar>
-
-                <TreeView Grid.Column="0"  Grid.Row="1" ItemsSource="{x:Bind ProjectViewModel.RootItemsSource, Mode=OneWay}" >
+    <NavigationView x:Name="navigationView" IsBackButtonVisible="Collapsed"  DisplayModeChanged="NavigationView_DisplayModeChanged"  SizeChanged="NavigationView_SizeChanged">
+        <NavigationView.Resources>
+            <Style TargetType="MenuFlyoutPresenter" x:Key="hideFlyout">
+                <Setter Property="Visibility" Value="Collapsed" />
+            </Style>
+        </NavigationView.Resources>
+        <NavigationView.PaneCustomContent>
+            <ScrollViewer x:Name="projectTree" Visibility="{x:Bind navigationView.IsPaneOpen, Converter={StaticResource BoolVisibilityConverter}}" >
+                <TreeView Grid.Column="0"  Grid.Row="1" SelectionMode="None" ItemsSource="{x:Bind ProjectViewModel.RootItemsSource, Mode=OneWay}" >
                     <TreeView.ItemTemplate>
                         <DataTemplate x:DataType="viewmodel:ProjectTreeElementViewModel">
-                            <TreeViewItem ItemsSource="{x:Bind Children}" >
+
+                            <TreeViewItem ItemsSource="{x:Bind Children}" IsDoubleTapEnabled="True" DoubleTapped="TreeViewItem_DoubleTapped" >
                                 <TreeViewItem.ContextFlyout>
-                                    <MenuFlyout>
-                                        <MenuFlyoutItem Command="{x:Bind OpenCommand}"   />
-                                        <MenuFlyoutSeparator Visibility="{x:Bind CreateCommands, Converter={StaticResource EmptyCollectionsConverter}}"/>
+                                    <MenuFlyout MenuFlyoutPresenterStyle="{x:Bind HasCommands, Converter={StaticResource ReturnParameterOnTrueConverter}, ConverterParameter={StaticResource hideFlyout}}" >
+
+                                        <MenuFlyoutItem Command="{x:Bind OpenCommand}"  Visibility="{x:Bind OpenCommand, Converter={StaticResource NullToHiddenConverter}}"  />
                                         <MenuFlyoutSubItem Text="Add New…"   helper:MenuBinding.ItemsSource="{x:Bind CreateCommands}" Visibility="{x:Bind CreateCommands, Converter={StaticResource EmptyCollectionsConverter}}" >
                                             <helper:MenuBinding.ItemsTemplate>
                                                 <DataTemplate x:DataType="XamlUICommand">
@@ -55,9 +57,23 @@
                     </TreeView.ItemTemplate>
 
                 </TreeView>
+            </ScrollViewer>
+        </NavigationView.PaneCustomContent>
+        
+        <NavigationView.PaneHeader>
+            <StackPanel>
+                <CommandBar >
+                    <AppBarButton Icon="OpenFile" Click="AppBarButton_Click"></AppBarButton>
+                </CommandBar>
             </StackPanel>
         </NavigationView.PaneHeader>
-
+        <NavigationView.MenuItems>
+            <NavigationViewItemSeparator/>
+        </NavigationView.MenuItems>
+        <NavigationView.FooterMenuItems>
+            <NavigationViewItem Icon="Play" Content="Run" IsEnabled="False" />
+            
+        </NavigationView.FooterMenuItems>
 
         <local:DocumentsPage  x:Name="documents" IndentMenu="{x:Bind IsMenuCompact, Mode=OneWay}" Grid.Column="1" Grid.RowSpan="2"  HorizontalAlignment="Stretch" ProjectViewModel="{x:Bind ProjectViewModel, Mode=OneWay}" ></local:DocumentsPage>
 

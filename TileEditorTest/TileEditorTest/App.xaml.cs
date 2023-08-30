@@ -17,9 +17,11 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 using TileEditorTest.Model;
 using TileEditorTest.View;
+using TileEditorTest.View.Controls;
 using TileEditorTest.View.Dialogs;
 using TileEditorTest.ViewModel;
 
@@ -50,8 +52,8 @@ public partial class App : Application {
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args) {
         m_window = new MainWindow();
-        m_window.Activate();
         TrackWindow(m_window);
+        m_window.Activate();
     }
 
     private Window? m_window;
@@ -63,13 +65,25 @@ public partial class App : Application {
 
     private static readonly ObservableCollection<TabViewItem> tabs = new();
     private static readonly ObservableCollection<Window> windows = new();
+
+    private static readonly Dictionary<Window, NotificationArea> notificationAreas = new();
+
     public static ReadOnlyObservableCollection<Window> ActiveWindows { get; } = new(windows);
     public static ReadOnlyObservableCollection<TabViewItem> ActiveTabs { get; } = new(tabs);
 
-    static public Window CreateWindow() {
-        Window newWindow = new Window {
-            SystemBackdrop = new MicaBackdrop()
+    static public Window CreateWindow(DocumentsPage newPage) {
+        Window newWindow = new() {
+            SystemBackdrop = new MicaBackdrop(),
+            ExtendsContentIntoTitleBar = true,
+            Content = newPage
         };
+
+        newPage.Loaded += (object sender, RoutedEventArgs e) => {
+            FrameworkElement? titleBar = newWindow.Content.FindDescendant("AppTitleBar");
+            newWindow.SetTitleBar(titleBar);
+        };
+
+
         TrackWindow(newWindow);
         return newWindow;
     }
@@ -77,11 +91,20 @@ public partial class App : Application {
     static public void TrackWindow(Window window) {
         window.Closed += (sender, args) => {
             windows.Remove(window);
+            notificationAreas.Remove(window);
         };
+        RoutedEventHandler onLoad = null!;
+        onLoad = (sender, e) => {
+            var notificationArea = window.Content.FindDescendantOrSelf<NotificationArea>() ?? throw new ArgumentException("Window dose not contain a notification area.", nameof(window));
+            notificationAreas.Add(window, notificationArea);
+            ((FrameworkElement)window.Content).Loaded -= onLoad;
+        };
+        ((FrameworkElement)window.Content).Loaded += onLoad;
+
         windows.Add(window);
     }
 
-    static public Window? GetWindowForElement(UIElement element) {
+    static public Window GetWindowForElement(UIElement element) {
         if (element.XamlRoot != null) {
             foreach (Window window in windows) {
                 if (element.XamlRoot == window.Content.XamlRoot) {
@@ -89,7 +112,16 @@ public partial class App : Application {
                 }
             }
         }
-        return null;
+        throw new ArgumentException("Could not find Window for element.", nameof(element));
+    }
+
+    internal static NotificationArea GetNotificationAreaForElement(Window element) {
+        return !notificationAreas.TryGetValue(element, out var notificationArea)
+            ? throw new ArgumentException("Could not find NotificationArea for Window.", nameof(element))
+            : notificationArea;
+    }
+    internal static NotificationArea GetNotificationAreaForElement(UIElement element) {
+        return GetNotificationAreaForElement(GetWindowForElement(element));
     }
 
     public static ReadOnlyObservableGroupedCollection<ProjectPath, ViewLoader> TabPathes;
