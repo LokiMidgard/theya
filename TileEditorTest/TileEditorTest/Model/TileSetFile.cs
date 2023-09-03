@@ -17,7 +17,7 @@ using Windows.Storage;
 
 namespace TileEditorTest.Model;
 
-internal partial class TileSetFile : JsonProjectItem<TileSetFile>, IProjectItemContentCreatable<TileSetFile> {
+public partial class TileSetFile : JsonProjectItem<TileSetFile>, IProjectItemContentCreatable<TileSetFile> {
     public static ImmutableArray<Regex> SupportedFilePatterns { get; } = ImmutableArray.Create(TileSetExtensionRegex());
     static Task<TileSetFile> IProjectItemContent<TileSetFile>.Load(ProjectPath path, ProjectViewModel project) => Load(path, project);
 
@@ -25,6 +25,8 @@ internal partial class TileSetFile : JsonProjectItem<TileSetFile>, IProjectItemC
     public static ProjectItemType Type => ProjectItemType.TileSet;
 
     public TileSize? TileSize { get; set; }
+
+    public TileData[] TileData { get; set; } = Array.Empty<TileData>();
 
     public static string Extension => ".tileset.json";
 
@@ -39,4 +41,7 @@ internal partial class TileSetFile : JsonProjectItem<TileSetFile>, IProjectItemC
 
 }
 
-public record struct TileSize(int Width, int Height) { }
+public record struct TileSize(int Width, int Height);
+
+public record struct TileData(TerrainIdData Terrain);
+public record struct TerrainIdData(int TopLeft, int Top, int TopRight, int Left, int Center, int Right, int BottomLeft, int Bottom, int BottomRight);

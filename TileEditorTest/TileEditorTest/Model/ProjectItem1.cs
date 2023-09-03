@@ -10,7 +10,7 @@ using TileEditorTest.ViewModel;
 namespace TileEditorTest.Model;
 
 [JsonConverter(typeof(ProjectItemConverter))]
-internal class ProjectItem<T> : ProjectItem where T : class, IProjectItemContent<T> {
+public class ProjectItem<T> : ProjectItem where T : class, IProjectItemContent<T> {
     private WeakReference<T>? oldReference;
 
     private Task<T>? ongoingTask;

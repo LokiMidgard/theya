@@ -3,6 +3,6 @@
 
 namespace TileEditorTest.Model;
 
-internal abstract class ProjectItemContent {
+public abstract class ProjectItemContent {
 
 }

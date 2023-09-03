@@ -13,7 +13,7 @@ using Windows.Storage.Streams;
 
 namespace TileEditorTest.Model;
 
-internal partial class ImageFile : ProjectItemContent, IProjectItemContent<ImageFile> {
+public partial class ImageFile : ProjectItemContent, IProjectItemContent<ImageFile> {
     private ImageFile(uint width, uint height, StorageFile file) {
         Width = width;
         Height = height;

@@ -24,6 +24,7 @@ using Windows.UI;
 using System.Collections;
 using System.ComponentModel;
 using Microsoft.UI.Xaml.Markup;
+using TileEditorTest.ViewModel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -32,55 +33,96 @@ namespace TileEditorTest.View.Controls;
 public sealed partial class NineGridPoints : UserControl {
 
     [Notify]
-    private Color? selectedColor;
+    private TerranViewModel? selectedColor = new TerranViewModel() { Color = Color.FromArgb(255, 255, 0, 0) };
+
+    //[Notify]
+    //private Color? point1;
+    //[Notify]
+    //private Color? point2 = Color.FromArgb(255, 0, 0, 255);
+    //[Notify]
+    //private Color? point3;
+    //[Notify]
+    //private Color? point4;
+    //[Notify]
+    //private Color? point5;
+    //[Notify]
+    //private Color? point6;
+    //[Notify]
+    //private Color? point7;
+    //[Notify]
+    //private Color? point8;
+    //[Notify]
+    //private Color? point9;
+
+    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
+    //private TerrainData? p1;
+    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
+    //private TerrainData? p2;
+    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
+    //private TerrainData? p3;
+    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
+    //private TerrainData? p4;
+    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
+    //private TerrainData? p5;
+    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
+    //private TerrainData? p6;
+    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
+    //private TerrainData? p7;
+    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
+    //private TerrainData? p8;
+    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
+    //private TerrainData? p9;
 
     [Notify]
-    private Color? point1;
-    [Notify]
-    private Color? point2 = Color.FromArgb(255, 0, 0, 255);
-    [Notify]
-    private Color? point3;
-    [Notify]
-    private Color? point4;
-    [Notify]
-    private Color? point5;
-    [Notify]
-    private Color? point6;
-    [Notify]
-    private Color? point7;
-    [Notify]
-    private Color? point8;
-    [Notify]
-    private Color? point9;
-
-    [Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    private TerrainData? p1;
-    [Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    private TerrainData? p2;
-    [Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    private TerrainData? p3;
-    [Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    private TerrainData? p4;
-    [Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    private TerrainData? p5;
-    [Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    private TerrainData? p6;
-    [Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    private TerrainData? p7;
-    [Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    private TerrainData? p8;
-    [Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    private TerrainData? p9;
-
-
-    public NineGridPoints() {
-        SelectedColor = Color.FromArgb(255, 255, 0, 0);
-        this.InitializeComponent();
-        pathHolder.SizeChanged += (sender, e) => this.RecalculatePath();
-    }
+    private TileSetViewModel? viewModel;
 
     [Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
     private TerrainData[] paths = Array.Empty<TerrainData>();
+
+    [Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
+    private IList<TerrainData> mousePaths = Array.Empty<TerrainData>();
+
+    [Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
+    private int hoverTileX;
+    [Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
+    private int hoverTileY;
+    private TileViewModel[]? lastTielsModels;
+
+    private void OnViewModelChanged(TileSetViewModel? oldValue, TileSetViewModel? newValue) {
+
+        if (oldValue is not null) {
+            oldValue.PropertyChanged -= ViewModelPropertyChanged;
+        }
+        if (newValue is not null) {
+            newValue.PropertyChanged += ViewModelPropertyChanged;
+        }
+        RecalculatePath();
+    }
+
+    private void ViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e) {
+        System.Diagnostics.Debug.Assert(ViewModel is not null);
+        if (e.PropertyName == nameof(ViewModel.TileModel)) {
+
+
+            foreach (var t in lastTielsModels ?? Enumerable.Empty<TileViewModel>()) {
+                t.PropertyChanged -= TileModelChanged;
+            }
+            this.lastTielsModels = ViewModel.TileModel;
+            foreach (var t in ViewModel.TileModel) {
+                t.PropertyChanged += TileModelChanged;
+            }
+            RecalculatePath();
+        }
+    }
+
+    private void TileModelChanged(object? sender, PropertyChangedEventArgs e) {
+        RecalculatePath();
+    }
+
+    public NineGridPoints() {
+        this.InitializeComponent();
+        pathHolder.SizeChanged += (sender, e) => this.RecalculatePath();
+    }
 
     private void OnAnyPropertyChanged(string propertyName) {
         if (propertyName.StartsWith("Point")) {
@@ -89,263 +131,407 @@ public sealed partial class NineGridPoints : UserControl {
     }
 
     private void RecalculatePath() {
+        var transform = new TranslateTransform() { };
+        List<TerrainData> paths = new();
+        if (viewModel is not null) {
+            TerranViewModel?[,] colorsToHandle = new TerranViewModel[3 * viewModel.Columns, 3 * viewModel.Rows];
 
+            for (int tileX = 0; tileX < viewModel.Columns; tileX++) {
+                for (int tileY = 0; tileY < viewModel.Rows; tileY++) {
+                    for (int x = 0; x < 3; x++) {
+                        for (global::System.Int32 y = 0; y < 3; y++) {
+                            colorsToHandle[tileX * 3 + x, tileY * 3 + y] = viewModel.TileModel[tileX + tileY * viewModel.Columns].Grid[x, y];
+                        }
+                    }
+                }
+            }
 
+            (int x, int y) start = (0, 0);
+            while (true) {
+                for (int y = start.y; y < colorsToHandle.GetLength(1); y++) {
+                    for (int x = 0 /* dont't start at x since we will skip it every later y start.x*/; x < colorsToHandle.GetLength(0); x++) {
+                        if (colorsToHandle[x, y] is not null) {
+                            start = (x, y);
+                            goto afterLoop;
+                        }
+                    }
+                }
+                break; // Did not find anything…
+            afterLoop:
 
+                var currentColor = colorsToHandle[start.x, start.y];
+                if (currentColor is not null) {
+                    string path = CalculatePath(transform, colorsToHandle, start, currentColor, Edge4.Left);// We have always the most top left point so we start left
 
-        Color?[,] colorsToHandle = new[,] {
-            {point1, point4, point7},
-            {point2, point5, point8},
-            {point3, point6, point9 }
-        };
-
-        List<TerrainData> paths = CalculatePathes(colorsToHandle);
+                    paths.Add(new(currentColor, path));
+                }
+            }
+        }
 
         this.Paths = paths.ToArray();
-
-        // the buttons
-
-        //var pathControls = new[,] {
-        //    {P1, P2, P3},
-        //    {P4, P5, P6},
-        //    {P7, P8, P9 }
-        //};
-        for (int y = 0; y < 3; y++) {
-            for (int x = 0; x < 3; x++) {
-                Color?[,] c = new Color?[3, 3];
-                c[x, y] = Color.FromArgb(255, 0, 255, 255);
-                var currentPath = CalculatePathes(c)[0];
-                //var pathFromCode = XamlReader.Load($"<Path xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'><Path.Data>{currentPath.Path}</Path.Data></Path>") as Microsoft.UI.Xaml.Shapes. Path;
-                //pathControls[x, y].Data = pathFromCode!.Data;
-                var index = x + y * 3;
-                switch (index) {
-                    case 0:
-                        P1 = currentPath; break;
-                    case 1:
-                        P2 = currentPath; break;
-                    case 2:
-                        P3 = currentPath; break;
-                    case 3:
-                        P4 = currentPath; break;
-                    case 4:
-                        P5 = currentPath; break;
-                    case 5:
-                        P6 = currentPath; break;
-                    case 6:
-                        P7 = currentPath; break;
-                    case 7:
-                        P8 = currentPath; break;
-                    case 8:
-                        P9 = currentPath; break;
-                    default:
-                        break;
-                }
-
-            }
-        }
     }
 
-    private List<TerrainData> CalculatePathes(Color?[,] colorsToHandle) {
-        List<TerrainData> paths = new();
-        while (true) {
+    private string CalculatePath(Transform transform, TerranViewModel?[,] colorsToHandle, (int x, int y) start, TerranViewModel currentColor, Edge4 startEdge, bool negate = false) {
 
-
-            (int x, int y) start = (-1, -1);
-
-
-            for (int y = 0; y < 3; y++) {
-                for (int x = 0; x < 3; x++) {
-                    if (colorsToHandle[x, y] is not null) {
-                        start = (x, y);
-                        goto afterLoop;
-                    }
-                }
-            }
-        afterLoop:
-
-            if (start.y == -1) {
-                break;
-            }
-
-
-            var currentColor = colorsToHandle[start.x, start.y].Value;
-            // as coordinate system we use values from 0-6 on x and y
-            // that way we always will have integer numbers below
-            PathBuilder builder = new(pathHolder.ActualSize / 6.0f);
-
-            // we have 24 Points to check, in a 7×7 grid (not all points are used)
-            var handledEdges = new bool[7, 7];
-            var handleSubTiles = new bool[3, 3];
-            // Start always here    
-            builder.Move(new(start.x * 2, start.y * 2 + 1), CommandType.Absolute);
-            HandelLeft(start.x, start.y);
-
-            paths.Add(new(new Color() { B = currentColor.B, G = currentColor.G, R = currentColor.R, A = 120 }, currentColor, builder.ToString()));
-            // removing handled color
-            for (int x = 0; x < 3; x++) {
-                for (int y = 0; y < 3; y++) {
-                    if (handleSubTiles[x, y]) {
-                        colorsToHandle[x, y] = null;
-                    }
-                }
-            }
-
-            void HandelLeft(int x, int y) {
-                handleSubTiles[x, y] = true;
-                if (handledEdges[x * 2, y * 2 + 1]) {
-                    Finish();
-                    return;
-                }
-                handledEdges[x * 2, y * 2 + 1] = true;
-                // 4 cases, straight up, right, or left, or a corner (to the right)
-
-                if (y == 0 || (x == 0 && colorsToHandle[x, y - 1] != currentColor)) {
-                    // it is hard corner if we are at y = 0 or x = 0 and we go to right
-                    builder.VerticalLine(-1)
-                        .HorizontalLine(1);
-                    HandelTop(x, y);
-                } else if (x > 0 && colorsToHandle[x - 1, y - 1] == currentColor) {
-                    // it curve to the left, if the over and diagonal is set
-                    // x ? 
-                    //   ↑ 
-                    // 
-                    builder.EllipticalArc(new(1, 1), 90, false, false, new(-1, -1));
-                    HandelBottom(x - 1, y - 1);
-                } else if (colorsToHandle[x, y - 1] == currentColor) {
-                    // it is straight up if the value over this matches (we already know that the value left from it did not) 
-                    builder.VerticalLine(-2);
-                    HandelLeft(x, y - 1);
-                } else {
-                    // everything should be an arc to the right.
-                    builder.EllipticalArc(new(1, 1), 90, false, true, new(1, -1));
-                    HandelTop(x, y);
-                }
-            }
-            void HandelRight(int x, int y) {
-                handleSubTiles[x, y] = true;
-                if (handledEdges[x * 2 + 2, y * 2 + 1]) {
-                    Finish();
-                    return;
-                }
-                handledEdges[x * 2 + 2, y * 2 + 1] = true;
-                // 4 cases, straight down, right, or left, or a corner (to the left)
-
-                if (y == 2 || (x == 2 && colorsToHandle[x, y + 1] != currentColor)) {
-                    // it is hard corner if we are at y = 0 or x = 0 and we go to right
-                    builder.VerticalLine(1)
-                        .HorizontalLine(-1);
-                    HandelBottom(x, y);
-                } else if (x < 2 && colorsToHandle[x + 1, y + 1] == currentColor) {
-                    // it curve to the right, if the over and diagonal is set
-                    // ↓   
-                    // ? x 
-                    // 
-                    builder.EllipticalArc(new(1, 1), 90, false, false, new(1, 1));
-                    HandelTop(x + 1, y + 1);
-                } else if (colorsToHandle[x, y + 1] == currentColor) {
-                    // it is straight down if the value over this matches (we already know that the value right from it did not) 
-                    builder.VerticalLine(+2);
-                    HandelRight(x, y + 1);
-                } else {
-                    // everything should be an arc to the left.
-                    builder.EllipticalArc(new(1, 1), 90, false, true, new(-1, 1));
-                    HandelBottom(x, y);
-                }
-
-            }
-            void HandelTop(int x, int y) {
-                handleSubTiles[x, y] = true;
-                if (handledEdges[x * 2 + 1, y * 2]) {
-                    Finish();
-                    return;
-                }
-                handledEdges[x * 2 + 1, y * 2] = true;
-
-                // 4 cases, straight right, up arc, or down arc, or down corner
-                if (x == 2 || (y == 0 && colorsToHandle[x + 1, y] != currentColor)) {
-                    builder.HorizontalLine(1)
-                        .VerticalLine(1);
-                    HandelRight(x, y);
-                } else if (y > 0 && colorsToHandle[x + 1, y - 1] == currentColor) {
-                    //   x
-                    // → ?
-                    builder.EllipticalArc(new(1, 1), 90, false, false, new(1, -1));
-                    HandelLeft(x + 1, y - 1);
-                } else if (colorsToHandle[x + 1, y] == currentColor) {
-                    // strait rigt
-                    builder.HorizontalLine(2);
-                    HandelTop(x + 1, y);
-                } else {
-                    builder.EllipticalArc(new(1, 1), 90, false, true, new(1, 1));
-
-                    HandelRight(x, y);
-                }
-            }
-            void HandelBottom(int x, int y) {
-                handleSubTiles[x, y] = true;
-                if (handledEdges[x * 2 + 1, y * 2 + 2]) {
-                    Finish();
-                    return;
-                }
-                handledEdges[x * 2 + 1, y * 2 + 2] = true;
-
-                // 4 cases straight left, up arc, down arc, up corner
-                if (x == 0 || (y == 2 && colorsToHandle[x - 1, y] != currentColor)) {
-                    builder.HorizontalLine(-1)
-                        .VerticalLine(-1);
-                    HandelLeft(x, y);
-                } else if (y < 2 && colorsToHandle[x - 1, y + 1] == currentColor) {
-                    // ? ←
-                    // x 
-                    builder.EllipticalArc(new(1, 1), 90, false, false, new(-1, 1));
-                    HandelRight(x - 1, y + 1);
-                } else if (colorsToHandle[x - 1, y] == currentColor) {
-                    builder.HorizontalLine(-2);
-                    HandelBottom(x - 1, y);
-                } else {
-                    builder.EllipticalArc(new(1, 1), 90, false, true, new(-1, -1));
-                    HandelLeft(x, y);
-                }
-            }
-            void Finish() {
-
-                // Handel Special case
-                // ? x ?
-                // x O x
-                // ? x ?
-                // In that case the middel value is not visited und is filled.
-
-                if (handleSubTiles[1, 0]
-                    && handleSubTiles[0, 1]
-                    && handleSubTiles[2, 1]
-                    && handleSubTiles[1, 2]
-                    ) {
-                    // now we need to check the center, if it is current color we need to set it to handeld
-                    if (colorsToHandle[1, 1] == currentColor) {
-                        handleSubTiles[1, 1] = true;
-                    } else {
-                        // Otherwise we need to cut out a circle
-                        //M 30,45 A 15 15 359 0 0 60,45 A 15 15 359 0 0 30,45
-                        builder.Move(new(2, 3), CommandType.Absolute)
-                            .EllipticalArc(new(1, 1), 180, false, false, new(2, 0))
-                            .EllipticalArc(new(1, 1), 180, false, false, new(-2, 0))
-                            ;
-                    }
-
-                }
-
-                builder.Close();
-            }
-
-
-
-
-
-
-
+        if (viewModel is null) {
+            return "";
         }
 
-        return paths;
+        // as coordinate system we use values from 0-6 on x and y
+        // that way we always will have integer numbers below
+
+        Transform absoluteTransform = new TransformGroup() {
+            Children = {
+                    new ScaleTransform(){
+                        ScaleX = viewModel.TileWidth / 6.0,
+                        ScaleY = viewModel.TileHeight/6.0
+                    },
+                    transform,
+                }
+        };
+        Transform relativTransform = new TransformGroup() {
+            Children = {
+                    new ScaleTransform(){
+                        ScaleX = viewModel.TileWidth / 6.0,
+                        ScaleY = viewModel.TileHeight/6.0
+                    },
+                }
+        };
+
+        PathBuilder builder = new(absoluteTransform, relativTransform);
+
+        // we have 24 Points to check, in a 7×7 grid (not all points are used)
+        Edge4?[,] handledEdges = new Edge4?[7 * viewModel.Columns, 7 * viewModel.Rows];
+        bool[,] handleSubTiles = new bool[3 * viewModel.Columns, 3 * viewModel.Rows];
+        // Start here    
+        int handledX = start.x * 2 + (startEdge switch {
+            Edge4.Top or Edge4.Bottom => 1,
+            Edge4.Right => 2,
+            _ => 0
+        });
+        int handledY = start.y * 2 + (startEdge switch {
+            Edge4.Left or Edge4.Right => 1,
+            Edge4.Bottom => 2,
+            _ => 0
+        });
+
+        builder.Move(new(handledX, handledY), CommandType.Absolute);
+        switch (startEdge) {
+            case Edge4.Left:
+                HandelLeft(start.x, start.y);
+                break;
+            case Edge4.Right:
+                HandelRight(start.x, start.y);
+                break;
+            case Edge4.Top:
+                HandelTop(start.x, start.y);
+                break;
+            case Edge4.Bottom:
+                HandelBottom(start.x, start.y);
+                break;
+            default:
+                break;
+        }
+
+        (bool topLeft, bool top, bool topRight, bool left, bool right, bool bottomLeft, bool bottem, bool bottemRight) GetNeighbors(int x, int y) {
+            return (
+                x > 0 && y > 0 && colorsToHandle[x - 1, y - 1] == currentColor ^ negate,
+                y > 0 && colorsToHandle[x, y - 1] == currentColor ^ negate,
+                y > 0 && x < colorsToHandle.GetLength(0) - 1 && colorsToHandle[x + 1, y - 1] == currentColor ^ negate,
+                x > 0 && colorsToHandle[x - 1, y] == currentColor ^ negate,
+                x < colorsToHandle.GetLength(0) - 1 && colorsToHandle[x + 1, y] == currentColor ^ negate,
+                x > 0 && y < colorsToHandle.GetLength(1) - 1 && colorsToHandle[x - 1, y + 1] == currentColor ^ negate,
+                y < colorsToHandle.GetLength(1) - 1 && colorsToHandle[x, y + 1] == currentColor ^ negate,
+                x < colorsToHandle.GetLength(0) - 1 && y < colorsToHandle.GetLength(1) - 1 && colorsToHandle[x + 1, y + 1] == currentColor ^ negate
+                );
+        }
+
+        bool IsHandled(int x, int y, Edge4 edge) {
+            int handledX = x * 2 + (edge switch {
+                Edge4.Top or Edge4.Bottom => 1,
+                Edge4.Right => 2,
+                _ => 0
+            });
+            int handledY = y * 2 + (edge switch {
+                Edge4.Left or Edge4.Right => 1,
+                Edge4.Bottom => 2,
+                _ => 0
+            });
+            handleSubTiles[x, y] = true;
+            if (handledEdges[handledX, handledY] is not null) {
+                return true;
+            }
+            handledEdges[handledX, handledY] = edge;
+            return false;
+        }
+
+        Edge4[] GetEdges(int x, int y) {
+            return Enum.GetValues<Edge4>().Where(edge => {
+
+                int handledX = x * 2 + (edge switch {
+                    Edge4.Top or Edge4.Bottom => 1,
+                    Edge4.Right => 2,
+                    _ => 0
+                });
+                int handledY = y * 2 + (edge switch {
+                    Edge4.Left or Edge4.Right => 1,
+                    Edge4.Bottom => 2,
+                    _ => 0
+                });
+                return handledEdges[handledX, handledY] == edge;
+            }).ToArray();
+        }
+
+        void HandelLeft(int x, int y) {
+            if (IsHandled(x, y, Edge4.Left)) {
+                Finish();
+                return;
+            }
+
+            var neighbors = GetNeighbors(x, y);
+
+            // 4 cases, straight up, right, or left, or a corner (to the right)
+
+            if (neighbors.topLeft && (!negate || neighbors.top)) {
+                // it curve to the left, if the over and diagonal is set
+                // x ? 
+                //   ↑ 
+                // 
+                if ((y % 3) == 0 || (((x - 1) % 3) == 2)) {
+                    builder.VerticalLine(-1)
+                        .HorizontalLine(-1);
+                } else {
+                    builder.EllipticalArc(new(1, 1), 90, false, false, new(-1, -1));
+                }
+                HandelBottom(x - 1, y - 1);
+            } else if (neighbors.top) {
+                // it is straight up if the value over this matches (we already know that the value left from it did not) 
+                builder.VerticalLine(-2);
+                HandelLeft(x, y - 1);
+            } else if ((y % 3) == 0 || ((x % 3) == 0)) {
+                // it is hard corner if we are at y = 0 or x = 0 and we go to right
+                builder.VerticalLine(-1)
+                    .HorizontalLine(1);
+                HandelTop(x, y);
+            } else {
+                // everything should be an arc to the right.
+                builder.EllipticalArc(new(1, 1), 90, false, true, new(1, -1));
+                HandelTop(x, y);
+            }
+        }
+        void HandelRight(int x, int y) {
+            if (IsHandled(x, y, Edge4.Right)) {
+                Finish();
+                return;
+            }
+            var neighbors = GetNeighbors(x, y);
+
+            // 4 cases, straight down, right, or left, or a corner (to the left)
+
+            if (neighbors.bottemRight && (!negate || neighbors.bottem)) {
+                // it curve to the right, if the over and diagonal is set
+                // ↓   
+                // ? x 
+                if (((x + 1) % 3) == 0 || (y % 3) == 2) {
+                    builder.VerticalLine(1)
+                        .HorizontalLine(1);
+                } else {
+                    builder.EllipticalArc(new(1, 1), 90, false, false, new(1, 1));
+                }
+                HandelTop(x + 1, y + 1);
+            } else if (neighbors.bottem) {
+                // it is straight down if the value over this matches (we already know that the value right from it did not) 
+                builder.VerticalLine(+2);
+                HandelRight(x, y + 1);
+            } else if ((y % 3) == 2 || ((x % 3) == 2)) {
+                // it is hard corner if we are at y = 0 or x = 0 and we go to right
+                builder.VerticalLine(1)
+                    .HorizontalLine(-1);
+                HandelBottom(x, y);
+            } else {
+                // everything should be an arc to the left.
+                builder.EllipticalArc(new(1, 1), 90, false, true, new(-1, 1));
+                HandelBottom(x, y);
+            }
+
+        }
+        void HandelTop(int x, int y) {
+            if (IsHandled(x, y, Edge4.Top)) {
+                Finish();
+                return;
+            }
+            var neighbors = GetNeighbors(x, y);
+
+            // 4 cases, straight right, up arc, or down arc, or down corner
+            if (neighbors.topRight && (!negate || neighbors.right)) {
+                //   x
+                // → ?
+                if (((y - 1) % 3) == 2 || (x % 3) == 2) {
+                    builder
+                        .HorizontalLine(1)
+                        .VerticalLine(-1);
+                } else {
+                    builder.EllipticalArc(new(1, 1), 90, false, false, new(1, -1));
+                }
+                HandelLeft(x + 1, y - 1);
+            } else if (neighbors.right) {
+                // strait rigt
+                builder.HorizontalLine(2);
+                HandelTop(x + 1, y);
+            } else if ((x % 3) == 2 || ((y % 3) == 0)) {
+                builder.HorizontalLine(1)
+                    .VerticalLine(1);
+                HandelRight(x, y);
+            } else {
+                builder.EllipticalArc(new(1, 1), 90, false, true, new(1, 1));
+                HandelRight(x, y);
+            }
+        }
+        void HandelBottom(int x, int y) {
+            if (IsHandled(x, y, Edge4.Bottom)) {
+                Finish();
+                return;
+            }
+            var neighbors = GetNeighbors(x, y);
+
+            // 4 cases straight left, up arc, down arc, up corner
+            if (neighbors.bottomLeft && (!negate || neighbors.left)) {
+                // ? ←
+                // x 
+                if (((y + 1) % 3) == 0 || ((x % 3) == 0)) {
+                    builder
+                        .HorizontalLine(-1)
+                        .VerticalLine(1);
+                } else {
+                    builder.EllipticalArc(new(1, 1), 90, false, false, new(-1, 1));
+                }
+                HandelRight(x - 1, y + 1);
+            } else if (neighbors.left) {
+                builder.HorizontalLine(-2);
+                HandelBottom(x - 1, y);
+            } else if ((x % 3) == 0 || ((y % 3) == 2)) {
+                builder.HorizontalLine(-1)
+                    .VerticalLine(-1);
+                HandelLeft(x, y);
+            } else {
+                builder.EllipticalArc(new(1, 1), 90, false, true, new(-1, -1));
+                HandelLeft(x, y);
+            }
+        }
+        void Finish() {
+            // Get Edges of current tile and if at least one is set and another not, fill
+            var visited = new HashSet<(int x, int y)>();
+            var startPointsForCut = new Dictionary<(int x, int y), Edge4>();
+            Visit(start.x, start.y);
+            bool Visit(int x, int y) {
+                if (visited.Contains((x, y)) || x < 0 || x >= colorsToHandle.GetLength(0) || y < 0 || y >= colorsToHandle.GetLength(1)) {
+                    return false;
+                }
+                visited.Add((x, y));
+                if (colorsToHandle[x, y] == currentColor) {
+                    handleSubTiles[x, y] = true;
+                    var currentEdges = GetEdges(x, y);
+                    //if (currentEdges.Length > 0) {
+                    if (!currentEdges.Contains(Edge4.Left)) {
+                        if (Visit(x - 1, y)) {
+                            startPointsForCut.TryAdd((x - 1, y), Edge4.Right);
+                        }
+                    }
+                    if (!currentEdges.Contains(Edge4.Right)) {
+                        if (Visit(x + 1, y)) {
+                            startPointsForCut.TryAdd((x + 1, y), Edge4.Left);
+                        }
+                    }
+                    if (!currentEdges.Contains(Edge4.Top)) {
+                        if (Visit(x, y - 1)) {
+                            startPointsForCut.TryAdd((x, y - 1), Edge4.Bottom);
+                        }
+                    }
+                    if (!currentEdges.Contains(Edge4.Bottom)) {
+                        if (Visit(x, y + 1)) {
+                            startPointsForCut.TryAdd((x, y + 1), Edge4.Top);
+                        }
+                    }
+
+                    var neighbors = GetNeighbors(x, y);
+                    if (neighbors.topLeft) {
+                        Visit(x - 1, y - 1);
+                    }
+                    if (neighbors.top) {
+                        Visit(x, y - 1);
+                    }
+                    if (neighbors.topRight) {
+                        Visit(x + 1, y - 1);
+                    }
+                    if (neighbors.left) {
+                        Visit(x - 1, y);
+                    }
+                    if (neighbors.right) {
+                        Visit(x + 1, y);
+                    }
+                    if (neighbors.bottomLeft) {
+                        Visit(x - 1, y + 1);
+                    }
+                    if (neighbors.bottem) {
+                        Visit(x, y + 1);
+                    }
+                    if (neighbors.bottemRight) {
+                        Visit(x + 1, y + 1);
+                    }
+
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+
+            if (startPointsForCut.Count > 0) {
+                var copyColorToHandle = new TerranViewModel?[colorsToHandle.GetLength(0), colorsToHandle.GetLength(1)];
+                Array.Copy(colorsToHandle, copyColorToHandle, colorsToHandle.Length);
+                while (!negate && startPointsForCut.Count > 0) {
+
+                    var startPoint = startPointsForCut.Keys.First();
+                    var edge = startPointsForCut[startPoint];
+                    startPointsForCut.Remove(startPoint);
+
+                    if (copyColorToHandle[startPoint.x, startPoint.y] != currentColor) {
+                        var cutoutPath = CalculatePath(transform, copyColorToHandle, startPoint, currentColor, edge, true);
+                        builder.AppendPath(cutoutPath);
+                    }
+                }
+            }
+
+            builder.Close();
+        }
+        string path = builder.ToString();
+
+        // removing handled color
+        for (int x = 0; x < colorsToHandle.GetLength(1); x++) {
+            for (int y = 0; y < colorsToHandle.GetLength(0); y++) {
+                if (handleSubTiles[x, y]) {
+                    colorsToHandle[x, y] = negate ? currentColor : null;
+                }
+            }
+        }
+
+        return path;
+    }
+
+    private enum Edge4 {
+        Top = 2,
+        Left = 4,
+        Right = 6,
+        Bottom = 8,
+    }
+    private enum Edge8 {
+        TopLeft = 1,
+        Top = 2,
+        TopRight = 3,
+        Left = 4,
+        Right = 6,
+        BottomLeft = 7,
+        Bottom = 8,
+        BottomRight = 9,
     }
 
     private void Path_PointerEntered(object sender, PointerRoutedEventArgs e) {
@@ -359,113 +545,180 @@ public sealed partial class NineGridPoints : UserControl {
     }
 
     private void Path_PointerPressed(object sender, PointerRoutedEventArgs e) {
-        if (Object.ReferenceEquals(Path1, sender)) {
-            Point1 = Point1 is null ? SelectedColor : null;
-        } else if (Object.ReferenceEquals(Path2, sender)) {
-            Point2 = Point2 is null ? SelectedColor : null;
-        } else if (Object.ReferenceEquals(Path3, sender)) {
-            Point3 = Point3 is null ? SelectedColor : null;
-        } else if (Object.ReferenceEquals(Path4, sender)) {
-            Point4 = Point4 is null ? SelectedColor : null;
-        } else if (Object.ReferenceEquals(Path5, sender)) {
-            Point5 = Point5 is null ? SelectedColor : null;
-        } else if (Object.ReferenceEquals(Path6, sender)) {
-            Point6 = Point6 is null ? SelectedColor : null;
-        } else if (Object.ReferenceEquals(Path7, sender)) {
-            Point7 = Point7 is null ? SelectedColor : null;
-        } else if (Object.ReferenceEquals(Path8, sender)) {
-            Point8 = Point8 is null ? SelectedColor : null;
-        } else if (Object.ReferenceEquals(Path9, sender)) {
-            Point9 = Point9 is null ? SelectedColor : null;
+        //if (Object.ReferenceEquals(Path1, sender)) {
+        //    Point1 = Point1 is null ? SelectedColor : null;
+        //} else if (Object.ReferenceEquals(Path2, sender)) {
+        //    Point2 = Point2 is null ? SelectedColor : null;
+        //} else if (Object.ReferenceEquals(Path3, sender)) {
+        //    Point3 = Point3 is null ? SelectedColor : null;
+        //} else if (Object.ReferenceEquals(Path4, sender)) {
+        //    Point4 = Point4 is null ? SelectedColor : null;
+        //} else if (Object.ReferenceEquals(Path5, sender)) {
+        //    Point5 = Point5 is null ? SelectedColor : null;
+        //} else if (Object.ReferenceEquals(Path6, sender)) {
+        //    Point6 = Point6 is null ? SelectedColor : null;
+        //} else if (Object.ReferenceEquals(Path7, sender)) {
+        //    Point7 = Point7 is null ? SelectedColor : null;
+        //} else if (Object.ReferenceEquals(Path8, sender)) {
+        //    Point8 = Point8 is null ? SelectedColor : null;
+        //} else if (Object.ReferenceEquals(Path9, sender)) {
+        //    Point9 = Point9 is null ? SelectedColor : null;
+        //}
+    }
+
+    private void UserControl_PointerMoved(object sender, PointerRoutedEventArgs e) {
+        if (viewModel is null) {
+            return;
         }
+        var position = e.GetCurrentPoint(this);
+        GetTileSubPosition(position.Position, out int tileX, out int tileY, out int subX, out int subY);
+
+        ////this.HoverTileX = tileX * viewModel.TileWidth;
+        ////this.HoverTileY = tileY * viewModel.TileHeight;
+
+        //TileViewModel tempModel = new(tileX, tileY);
+
+        //tempModel.Grid[subX, subY] = new() { Color = Color.FromArgb(255, 0, 255, 255) };
+        ////var currentPath = CalculatePathes(c)[0];
+        //throw new NotImplementedException();
+        //this.MousePaths = CalculatePathes(tempModel, new TranslateTransform() { X = tileX * viewModel.TileWidth, Y = tileY * viewModel.TileHeight });
+
+        var transform = new TranslateTransform() { X = tileX * viewModel.TileWidth, Y = tileY * viewModel.TileHeight };
+        TerranViewModel mouseOverTerrain = new() { Color = Color.FromArgb(255, 0, 255, 255) };
+
+        var grid = new TerranViewModel[3, 3];
+        grid[subX, subY] = mouseOverTerrain;
+
+        string path = CalculatePath(transform, grid, (subX, subY), mouseOverTerrain, Edge4.Left);
+        this.MousePaths = new[] { new TerrainData(mouseOverTerrain, path) };
+        if (e.Pointer.IsInContact) {
+
+            viewModel.TileModel[tileX + tileY * viewModel.Columns].Points[subX + subY * 3] = position.Properties.IsRightButtonPressed ? null : selectedColor;
+        }
+    }
+
+    private void GetTileSubPosition(Point e, out int tileX, out int tileY, out int subX, out int subY) {
+        var position = e;
+        tileX = (int)(position.X / viewModel.TileWidth);
+        tileY = (int)(position.Y / viewModel.TileHeight);
+        subX = (int)((position.X % viewModel.TileWidth) / (viewModel.TileWidth / 3.0));
+        subY = (int)((position.Y % viewModel.TileHeight) / (viewModel.TileHeight / 3.0));
+    }
+
+    private void UserControl_Tapped(object sender, TappedRoutedEventArgs e) {
+        if (viewModel is null) {
+            return;
+        }
+        var position = e.GetPosition(this);
+        GetTileSubPosition(position, out int tileX, out int tileY, out int subX, out int subY);
+        viewModel.TileModel[tileX + tileY * viewModel.Columns].Points[subX + subY * 3] = selectedColor;
+
+    }
+
+    private void UserControl_RightTapped(object sender, RightTappedRoutedEventArgs e) {
+        if (viewModel is null) {
+            return;
+        }
+        var position = e.GetPosition(this);
+        GetTileSubPosition(position, out int tileX, out int tileY, out int subX, out int subY);
+        viewModel.TileModel[tileX + tileY * viewModel.Columns].Points[subX + subY * 3] = null;
+
     }
 }
 
-internal record TerrainData(Color Fill, Color Stroke, string Path);
+internal record TerrainData(TerranViewModel Model, string Path);
 
 file enum CommandType {
     Absolute,
     Relativ
 }
 
-
-
 file class PathBuilder {
     private readonly StringBuilder builder = new();
-    private readonly Vector2 size;
+    private readonly Transform absoluteTransform;
+    private readonly Transform relativTransform;
 
-    public PathBuilder(Vector2 size) {
-        this.size = size;
+    public PathBuilder(Transform transform, Transform relativTransform) {
+        this.absoluteTransform = transform;
+        this.relativTransform = relativTransform;
     }
 
     public PathBuilder Move(Vector2 to, CommandType type = CommandType.Relativ) {
         Append("m", type);
-        Append(to);
+        Append(to, type);
         return this;
     }
 
     public PathBuilder Line(Vector2 to, CommandType type = CommandType.Relativ) {
         Append("l", type);
-        Append(to);
+        Append(to, type);
         return this;
     }
 
     public PathBuilder HorizontalLine(double to, CommandType type = CommandType.Relativ) {
         Append("h", type);
-        Append(to * size.X);
+        Append(GetTransform(type).TransformPoint(new(to, 0)).X);
         return this;
     }
     public PathBuilder VerticalLine(double to, CommandType type = CommandType.Relativ) {
         Append("v", type);
-        Append(to * size.Y);
+        Append(GetTransform(type).TransformPoint(new(0, to)).Y);
         return this;
     }
 
     public PathBuilder CubicBézierCurve(Vector2 controlPoint1, Vector2 controlPoint2, Vector2 endPoint, CommandType type = CommandType.Relativ) {
         Append("c", type);
-        Append(controlPoint1);
-        Append(controlPoint2);
-        Append(endPoint);
+        Append(controlPoint1, type);
+        Append(controlPoint2, type);
+        Append(endPoint, type);
         return this;
     }
 
     public PathBuilder QuadraticBézierCurve(Vector2 controlPoint, Vector2 endPoint, CommandType type = CommandType.Relativ) {
         Append("q", type);
-        Append(controlPoint);
-        Append(endPoint);
+        Append(controlPoint, type);
+        Append(endPoint, type);
         return this;
     }
     public PathBuilder SmoothCubicBézierCurve(Vector2 controlPoint1, Vector2 controlPoint2, CommandType type = CommandType.Relativ) {
         Append("s", type);
-        Append(controlPoint1);
-        Append(controlPoint2);
+        Append(controlPoint1, type);
+        Append(controlPoint2, type);
         return this;
     }
     public PathBuilder SmoothQuadraticBézierCurve(Vector2 controlPoint, Vector2 endPoint, CommandType type = CommandType.Relativ) {
         Append("t", type);
-        Append(controlPoint);
-        Append(endPoint);
+        Append(controlPoint, type);
+        Append(endPoint, type);
         return this;
     }
     public PathBuilder EllipticalArc(Vector2 size, double rotationAngle, bool isLargeArc, bool sweepDirectionFlag, Vector2 endPoint, CommandType type = CommandType.Relativ) {
         Append("a", type);
-        Append(size);
+        Append(size, type);
         Append(rotationAngle);
         Append(isLargeArc);
         Append(sweepDirectionFlag);
-        Append(endPoint);
+        Append(endPoint, type);
         return this;
     }
+
+    public PathBuilder AppendPath(string path) {
+        this.builder.Append(path.TrimEnd('z', 'Z'));
+        return this;
+    }
+
     public string Close() {
         builder.Append("z");
         return builder.ToString();
     }
 
+    private Transform GetTransform(CommandType type) => type == CommandType.Relativ ? relativTransform : absoluteTransform;
+
     private void Append(string command, CommandType type) {
         builder.Append($"{(type == CommandType.Relativ ? command.ToLower() : command.ToUpper())}");
     }
-    private void Append(Vector2 vector) {
-        Vector2 transformed = vector * size;
+    private void Append(Vector2 vector, CommandType type) {
+        var transformed = GetTransform(type).TransformPoint(new(vector.X, vector.Y));
         builder.Append(Invariant($"{transformed.X},{transformed.Y} "));
     }
     private void Append(double value) {
@@ -477,7 +730,6 @@ file class PathBuilder {
     private void Append(bool value) {
         builder.Append($"{(value ? '1' : '0')} ");
     }
-
 
     public override string ToString() => builder.ToString();
 }

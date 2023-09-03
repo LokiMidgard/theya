@@ -58,7 +58,7 @@
 
         <StackPanel Grid.Row="0" Grid.Column="1"  HorizontalAlignment="Stretch" Orientation="Vertical">
             <TextBlock  Text="Preview" ></TextBlock>
-            <Slider x:Name="zoomSlider" Minimum="0.25" Maximum="10" SmallChange="0.25" StepFrequency="0.25"  HorizontalAlignment="Stretch" />
+            <Slider x:Name="zoomSlider" Minimum="0.25" Maximum="10" SmallChange="0.25" StepFrequency="0.25"  HorizontalAlignment="Stretch" Value="3" />
         </StackPanel>
 
         <ScrollViewer  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.Row="1" Grid.RowSpan="3" HorizontalScrollBarVisibility="Auto" Grid.Column="1" VerticalScrollMode="Enabled" HorizontalScrollMode="Enabled">
@@ -71,16 +71,12 @@
                 </controlsComunity:LayoutTransformControl.Transform>
                 <Grid HorizontalAlignment="Left" VerticalAlignment="Top">
 
-                    <Rectangle  Fill="Magenta" >
 
-                    </Rectangle>
-                    <Image UseLayoutRounding="False" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Row="2" Source="{x:Bind ViewModel.ImageSource, Mode=OneWay}"  Stretch="None"  >
-                    </Image>
-                    <controls:AlignmentGrid
-                        Opacity="0.43"
-                        LineBrush="Firebrick"
-                        TileHeight="{x:Bind ViewModel.TileHeight,Mode=OneWay}"
-                        TileWidth="{x:Bind ViewModel.TileWidth,Mode=OneWay}" />
+                    <controls:NineGridPoints ViewModel="{x:Bind ViewModel}" ></controls:NineGridPoints>
+                    
+
+
+
                 </Grid>
             </controlsComunity:LayoutTransformControl>
 

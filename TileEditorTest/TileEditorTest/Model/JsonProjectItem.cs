@@ -20,7 +20,7 @@ using Windows.Storage;
 
 namespace TileEditorTest.Model;
 
-internal abstract class JsonProjectItem<T> : ProjectItemContent
+public abstract class JsonProjectItem<T> : ProjectItemContent
     where T : JsonProjectItem<T>, IProjectItemContent<T> {
 
     public async Task Save(ProjectPath path, ProjectViewModel project) {
