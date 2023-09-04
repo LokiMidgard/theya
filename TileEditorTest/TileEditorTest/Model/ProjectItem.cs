@@ -15,14 +15,14 @@ namespace TileEditorTest.Model;
 
 public abstract partial class ProjectItem {
     public ProjectPath Path { get; }
-    public ProjectViewModel Project { get; }
+    public CoreViewModel Project { get; }
 
     public abstract ProjectItemType Type { get; }
 
     static ProjectItem() {
         InitProjectItems();
     }
-    public ProjectItem(ProjectPath path, ProjectViewModel project) {
+    public ProjectItem(ProjectPath path, CoreViewModel project) {
         Path = path;
         Project = project ?? throw new ArgumentNullException(nameof(project));
     }
@@ -31,7 +31,7 @@ public abstract partial class ProjectItem {
 
     protected abstract Task<IProjectItemContent> GetContent();
 
-    public static async Task<ProjectItem?> Create(ProjectPath path, ProjectViewModel project) {
+    public static async Task<ProjectItem?> Create(ProjectPath path, CoreViewModel project) {
         var item = await path.ToStorageItem(project);
 
         if (item is StorageFolder folder) { // special case folder
@@ -45,11 +45,11 @@ public abstract partial class ProjectItem {
         return generator(path, project);
 
     }
-    private static List<(Regex pattern, Func<ProjectPath, ProjectViewModel, ProjectItem> generator)> generators = new();
+    private static List<(Regex pattern, Func<ProjectPath, CoreViewModel, ProjectItem> generator)> generators = new();
     [AutoInvoke.FindAndInvoke]
     private static void InitProjectItems<T>() where T : class, IProjectItemContent<T> {
         foreach (var pattern in T.SupportedFilePatterns) {
-            Func<ProjectPath, ProjectViewModel, ProjectItem<T>> generator = (ProjectPath path, ProjectViewModel project) => new ProjectItem<T>(path, project);
+            Func<ProjectPath, CoreViewModel, ProjectItem<T>> generator = (ProjectPath path, CoreViewModel project) => new ProjectItem<T>(path, project);
             generators.Add((pattern, generator));
         }
     }

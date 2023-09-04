@@ -28,7 +28,7 @@ internal class TileSetForMapViewModel {
     public TileSetFile TileSetModel { get; }
     public SizeInt32 TilesetSize { get; }
 
-    public static async Task<TileSetForMapViewModel> LoadAsync(CanvasDevice device, TileSetFile tileSetModel, ProjectViewModel project) {
+    public static async Task<TileSetForMapViewModel> LoadAsync(CanvasDevice device, TileSetFile tileSetModel, CoreViewModel project) {
         var image = await tileSetModel.Image.Content;
         using var imageStream = await image.LoadAsync();
         var canvas = await CanvasBitmap.LoadAsync(device, imageStream);

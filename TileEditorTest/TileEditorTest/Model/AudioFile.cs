@@ -29,7 +29,7 @@ internal partial class AudioFile : ProjectItemContent, IProjectItemContent<Audio
     public static ImmutableArray<Regex> SupportedFilePatterns { get; } = ImmutableArray.Create(PngExtension());
     public TimeSpan Duration { get; }
 
-    public static async Task<AudioFile> Load(ProjectPath path, ProjectViewModel project) {
+    public static async Task<AudioFile> Load(ProjectPath path, CoreViewModel project) {
         var file = await path.ToStorageFile(project);
         var props = await file.Properties.GetMusicPropertiesAsync();
         return new AudioFile(props.Duration);
@@ -39,7 +39,7 @@ internal partial class AudioFile : ProjectItemContent, IProjectItemContent<Audio
     private static partial Regex PngExtension();
 
 
-    public Task Save(ProjectPath path, ProjectViewModel project) {
+    public Task Save(ProjectPath path, CoreViewModel project) {
         return Task.CompletedTask;
     }
 }

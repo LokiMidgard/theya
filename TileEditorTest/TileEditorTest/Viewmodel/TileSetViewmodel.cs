@@ -25,16 +25,26 @@ using Windows.UI;
 namespace TileEditorTest.ViewModel;
 
 
-public interface IViewModel : INotifyPropertyChanged {
-    public ProjectViewModel Project { get; }
+public interface IViewModel : INotifyPropertyChanged, IDisposable {
+    public CoreViewModel Project { get; }
     public ICommand Save { get; }
     public bool HasChanges { get; }
+
+    void IDisposable.Dispose() {
+#pragma warning disable CS0618 // Type or member is obsolete
+        App.ReturnViewModel(this);
+#pragma warning restore CS0618 // Type or member is obsolete
+    }
+
+    public new void Dispose() {
+        ((IDisposable)this).Dispose();
+    }
 
 }
 public interface IViewModel<OfFile, ViewModel> : IViewModel
     where OfFile : class, IProjectItemContent<OfFile>
     where ViewModel : IViewModel<OfFile, ViewModel> {
-    public static abstract Task<ViewModel> Create(ProjectItem<OfFile> file, ProjectViewModel project);
+    public static abstract Task<ViewModel> Create(ProjectItem<OfFile> file, CoreViewModel project);
 }
 public interface IView {
     public IViewModel ViewModel { get; }
@@ -253,7 +263,7 @@ public partial class TileSetViewModel : DependencyObject, IViewModel<TileSetFile
     private readonly TileSetFile tileSet;
     private readonly ProjectItem<TileSetFile> projectItem;
 
-    public TileSetViewModel(TileSetFile tileSet, ProjectItem<TileSetFile> projectItem, ProjectViewModel project, ObservableCollection<ProjectItem<ImageFile>> allImages) {
+    public TileSetViewModel(TileSetFile tileSet, ProjectItem<TileSetFile> projectItem, CoreViewModel project, ObservableCollection<ProjectItem<ImageFile>> allImages) {
         this.tileSet = tileSet;
         this.projectItem = projectItem;
         Project = project;
@@ -292,13 +302,13 @@ public partial class TileSetViewModel : DependencyObject, IViewModel<TileSetFile
 
     }
 
-    public ProjectViewModel Project { get; }
+    public CoreViewModel Project { get; }
 
     public ReadOnlyObservableCollection<ProjectItem<ImageFile>> AllImages { get; }
 
 
 
-    public static async Task<TileSetViewModel> Create(ProjectItem<TileSetFile> projectItem, ProjectViewModel project) {
+    public static async Task<TileSetViewModel> Create(ProjectItem<TileSetFile> projectItem, CoreViewModel project) {
         var tileSet = await projectItem.Content;
         var files = project.GetProjectItemCollectionOfType<ImageFile>();
         ObservableCollection<ProjectItem<ImageFile>> allImages = new();

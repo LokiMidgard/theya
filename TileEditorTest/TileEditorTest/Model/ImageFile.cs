@@ -31,14 +31,14 @@ public partial class ImageFile : ProjectItemContent, IProjectItemContent<ImageFi
     }
 
     public static ImmutableArray<Regex> SupportedFilePatterns { get; } = ImmutableArray.Create(PngExtension());
-    public static async Task<ImageFile> Load(ProjectPath path, ProjectViewModel project) {
+    public static async Task<ImageFile> Load(ProjectPath path, CoreViewModel project) {
         var file = await path.ToStorageFile(project);
 
         var props = await file.Properties.GetImagePropertiesAsync();
         return new ImageFile(props.Width, props.Height, file);
     }
 
-    public Task Save(ProjectPath path, ProjectViewModel project) {
+    public Task Save(ProjectPath path, CoreViewModel project) {
         return Task.CompletedTask;
     }
 

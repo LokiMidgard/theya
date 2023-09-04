@@ -12,15 +12,15 @@ using Windows.Storage;
 namespace TileEditorTest.Model;
 
 public interface IProjectItemContentCreatable<T> : IProjectItemContent<T> where T : class, IProjectItemContent<T> {
-    static abstract Task<T> Create(ProjectPath file, ProjectViewModel project);
+    static abstract Task<T> Create(ProjectPath file, CoreViewModel project);
 
     public abstract static string Extension { get; }
 
 }
 public interface IProjectItemContent<T> : IProjectItemContent where T : class, IProjectItemContent<T> {
-    public Task Save(ProjectPath path, ProjectViewModel project);
+    public Task Save(ProjectPath path, CoreViewModel project);
 
-    static abstract Task<T> Load(ProjectPath path, ProjectViewModel project);
+    static abstract Task<T> Load(ProjectPath path, CoreViewModel project);
     public abstract static ImmutableArray<Regex> SupportedFilePatterns { get; }
     public abstract static ProjectItemType Type { get; }
 

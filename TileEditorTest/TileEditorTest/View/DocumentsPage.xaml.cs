@@ -41,7 +41,7 @@ namespace TileEditorTest.View;
 public sealed partial class DocumentsPage : Page {
     private const string DataIdentifier = "TileDocumentTab";
 
-    public ProjectViewModel ProjectViewModel { get; set; }
+    public CoreViewModel ProjectViewModel { get; set; }
 
     [Notify(Getter.Internal)]
     private ViewLoader? selectedViewLoader;

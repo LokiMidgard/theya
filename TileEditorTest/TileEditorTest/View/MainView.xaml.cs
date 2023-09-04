@@ -33,8 +33,8 @@ public sealed partial class MainView : UserControl, INotifyPropertyChanged {
     [Notify]
     private bool isMenuCompact;
 
-    private ProjectViewModel? projectViewModel;
-    internal ProjectViewModel? ProjectViewModel {
+    private CoreViewModel? projectViewModel;
+    internal CoreViewModel? ProjectViewModel {
         get => projectViewModel;
         set {
             if (projectViewModel != value) {
@@ -77,7 +77,7 @@ public sealed partial class MainView : UserControl, INotifyPropertyChanged {
             return;
         }
         var folder = await result.GetParentAsync();
-        var vm = await ProjectViewModel.Load(result);
+        var vm = await CoreViewModel.Load(result);
         Environment.CurrentDirectory = folder.Path;
         this.ProjectViewModel = vm;
 

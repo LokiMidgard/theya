@@ -12,7 +12,9 @@ using Microsoft.UI.Xaml.Shapes;
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -44,6 +46,22 @@ public partial class App : Application {
     /// </summary>
     public App() {
         this.InitializeComponent();
+    }
+
+    static App() {
+        TabPathes = new(tabPathes);
+        prjectItemTypeToloadersViewModel = GetViewModels().ToImmutableDictionary(x => x.projectItem, x => new Func<ProjectItem, CoreViewModel, Task<IViewModel>>((item, vm) => x.createViewModel(item, vm)));
+    }
+
+    [AutoInvoke.FindAndInvoke]
+    private static (Type projectItem, Func<ProjectItem, CoreViewModel, Task<IViewModel>> createViewModel) GetViewModels<VM, OfFile>()
+where OfFile : class, IProjectItemContent<OfFile>
+where VM : IViewModel<OfFile, VM> {
+        return (typeof(ProjectItem<OfFile>),
+    async (f, vm) => {
+        return await VM.Create((ProjectItem<OfFile>)f, vm);
+    }
+        );
     }
 
     /// <summary>
@@ -127,9 +145,6 @@ public partial class App : Application {
     public static ReadOnlyObservableGroupedCollection<ProjectPath, ViewLoader> TabPathes;
     private static ObservableGroupedCollection<ProjectPath, ViewLoader> tabPathes = new();
 
-    static App() {
-        TabPathes = new(tabPathes);
-    }
 
     internal static void CreateTab(DocumentsPage docs, ProjectItem item) {
         ViewLoader view = new() { ProjectViewModel = docs.ProjectViewModel, Item = item };
@@ -162,6 +177,105 @@ public partial class App : Application {
             }
         }
         tab.Dispose();
+    }
+
+
+    private static Dictionary<ProjectPath, (Task<IViewModel> task, int counter)> viewModels = new();
+    private static Dictionary<IViewModel, ProjectPath> reverseViewModels = new();
+    private static ImmutableDictionary<Type, Func<ProjectItem, CoreViewModel, Task<IViewModel>>> prjectItemTypeToloadersViewModel;
+
+    [Obsolete("Call Dispose instead.")]
+    internal static void ReturnViewModel(IViewModel viewModel) {
+        if (!reverseViewModels.TryGetValue(viewModel, out var path) || !viewModels.TryGetValue(path, out var cached)) {
+            return;
+        }
+        cached.counter--;
+        if (cached.counter == 0) {
+            viewModels.Remove(path);
+            reverseViewModels.Remove(viewModel);
+        } else {
+            viewModels[path] = cached;
+        }
+    }
+
+    internal static IViewModelLookup<OfFile> GetViewModel<OfFile>(ProjectItem<OfFile> file, CoreViewModel core)
+        where OfFile : class, IProjectItemContent<OfFile> {
+        return new ViewModelLookup<OfFile>(file, core);
+    }
+    internal static Task<IViewModel> GetViewModel(ProjectItem file, CoreViewModel core) {
+        return new ViewModelLookup(file, core).Of();
+    }
+
+
+
+    [InterfaceGenerator.GenerateAutoInterface]
+    private partial class ViewModelLookup<OfFile> : IViewModelLookup<OfFile> where OfFile : class, IProjectItemContent<OfFile> {
+        private ProjectItem<OfFile> file;
+        private readonly CoreViewModel core;
+
+        public ViewModelLookup(ProjectItem<OfFile> file, CoreViewModel core) {
+            this.file = file;
+            this.core = core;
+        }
+
+        public Task<IViewModel> Of() {
+            Task<IViewModel> result;
+
+            if (viewModels.TryGetValue(file.Path, out var cached)) {
+                result = cached.task;
+                cached.counter++;
+            } else {
+                result = prjectItemTypeToloadersViewModel[file.GetType()](file, core);
+                result.ContinueWith(t => reverseViewModels.Add(t.Result, file.Path));
+                cached = (result, 1);
+            }
+            viewModels[file.Path] = cached;
+
+            return result;
+        }
+        public Task<T> Of<T>(CoreViewModel core) where T : IViewModel<OfFile, T> {
+            Task<T> result;
+
+            if (viewModels.TryGetValue(file.Path, out var cached)) {
+                result = cached.task.ContinueWith(t => (T)t.Result);
+                cached.counter++;
+            } else {
+                result = T.Create(file, core);
+                result.ContinueWith(t => reverseViewModels.Add(t.Result, file.Path));
+                cached = (result.ContinueWith(t => (IViewModel)t.Result), 1);
+            }
+            viewModels[file.Path] = cached;
+
+            return result;
+        }
+    }
+
+    [InterfaceGenerator.GenerateAutoInterface]
+    private partial class ViewModelLookup : IViewModelLookup {
+        private ProjectItem file;
+        private readonly CoreViewModel core;
+
+        public ViewModelLookup(ProjectItem file, CoreViewModel core) {
+            this.file = file;
+            this.core = core;
+        }
+
+        public Task<IViewModel> Of() {
+            Task<IViewModel> result;
+
+            if (viewModels.TryGetValue(file.Path, out var cached)) {
+                result = cached.task;
+                cached.counter++;
+            } else {
+                result = prjectItemTypeToloadersViewModel[file.GetType()](file, core);
+                result.ContinueWith(t => reverseViewModels.Add(t.Result, file.Path));
+                cached = (result, 1);
+            }
+            viewModels[file.Path] = cached;
+
+            return result;
+        }
+
     }
 
 

@@ -35,26 +35,24 @@ public sealed partial class ViewLoader : TabViewItem, IDisposable {
     /// </summary>
     private bool disableUpdate;
 
-    private static readonly ImmutableDictionary<Type, Func<ProjectItem, ProjectViewModel, Task<IViewModel>>> loadersViewModel;
+    //private static readonly ImmutableDictionary<Type, Func<ProjectItem, CoreViewModel, Task<IViewModel>>> loadersViewModel;
     private static readonly ImmutableDictionary<Type, Func<IViewModel, Control>> loadersView;
     private static readonly ImmutableHashSet<Type> supportedProjectItems;
 
     static ViewLoader() {
-        loadersViewModel = GetView().ToImmutableDictionary(x => x.fileType, x => new Func<ProjectItem, ProjectViewModel, Task<IViewModel>>((item, vm) => x.createViewModel(item, vm)));
+        //loadersViewModel = GetView().ToImmutableDictionary(x => x.fileType, x => new Func<ProjectItem, CoreViewModel, Task<IViewModel>>((item, vm) => x.createViewModel(item, vm)));
         loadersView = GetView().ToImmutableDictionary(x => x.viewModelType, x => new Func<IViewModel, Control>((vm) => x.createView(vm)));
         supportedProjectItems = GetView().Select(x => x.projectItem).ToImmutableHashSet();
     }
 
     [AutoInvoke.FindAndInvoke]
-    private static (Type fileType, Type viewModelType, Type projectItem, Func<ProjectItem, ProjectViewModel, Task<IViewModel>> createViewModel, Func<IViewModel, Control> createView) GetView<View, VM, OfFile>()
+    private static (Type fileType, Type viewModelType, Type projectItem, Func<IViewModel, Control> createView) GetView<View, VM, OfFile>()
     where OfFile : class, IProjectItemContent<OfFile>
     where VM : IViewModel<OfFile, VM>
     where View : Control, IView<OfFile, VM, View> {
 
         return (fileType: typeof(OfFile), viewModelType: typeof(VM), typeof(ProjectItem<OfFile>),
-            async (f, vm) => {
-                return await VM.Create((ProjectItem<OfFile>)f, vm);
-            }, (vm) => {
+            (vm) => {
                 return View.Create((VM)vm);
             }
         );
@@ -101,14 +99,14 @@ public sealed partial class ViewLoader : TabViewItem, IDisposable {
 
 
 
-    internal ProjectViewModel? ProjectViewModel {
-        get { return (ProjectViewModel?)GetValue(ProjectViewModelProperty); }
+    internal CoreViewModel? ProjectViewModel {
+        get { return (CoreViewModel?)GetValue(ProjectViewModelProperty); }
         set { SetValue(ProjectViewModelProperty, value); }
     }
 
     // Using a DependencyProperty as the backing store for ViewModel.  This enables animation, styling, binding, etc...
     public static readonly DependencyProperty ProjectViewModelProperty =
-        DependencyProperty.Register("ProjectViewModel", typeof(ProjectViewModel), typeof(ViewLoader), new PropertyMetadata(null, ProjectChanged));
+        DependencyProperty.Register("ProjectViewModel", typeof(CoreViewModel), typeof(ViewLoader), new PropertyMetadata(null, ProjectChanged));
 
     private static void ProjectChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
         var me = (ViewLoader)d;
@@ -129,7 +127,7 @@ public sealed partial class ViewLoader : TabViewItem, IDisposable {
     public static readonly DependencyProperty ControlProperty =
         DependencyProperty.Register("Control", typeof(Control), typeof(ViewLoader), new PropertyMetadata(null));
 
-    private static Dictionary<ProjectPath, (IViewModel model, int count)> existingViewmodels = new();
+    //private static Dictionary<ProjectPath, (IViewModel model, int count)> existingViewmodels = new();
     private bool disposedValue;
 
     private static void ItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
@@ -143,41 +141,27 @@ public sealed partial class ViewLoader : TabViewItem, IDisposable {
             return;
         }
         this.IsLoading = true;
-        ClearItem(oldItem);
+        ClearItem();
         this.ContentViewModel = null;
 
         if (newItem is not null && ProjectViewModel is not null) {
-            if (!existingViewmodels.TryGetValue(newItem.Path, out var fonud)) {
-                var content = await newItem.Content;
-                var createViewModel = loadersViewModel[content.GetType()];
-                fonud = (await createViewModel(newItem, ProjectViewModel), 1);
-            } else {
-                fonud = (fonud.model, fonud.count + 1);
+            var vm = await App.GetViewModel(newItem, ProjectViewModel);
+            if (disposedValue) { // explizitly check again after await
+                vm.Dispose();
+                return;
             }
-            if (!disposedValue) { // Explicitly check again after the awaits
-                existingViewmodels[newItem.Path] = fonud;
-                var (vm, counter) = fonud;
-                this.ContentViewModel = vm;
-                var createControl = loadersView[vm.GetType()];
-                var control = createControl(vm);
-                this.Control = control;
-            }
+            this.ContentViewModel = vm;
+            var createControl = loadersView[vm.GetType()];
+            var control = createControl(vm);
+            this.Control = control;
         }
         this.IsLoading = false;
     }
 
-    private void ClearItem(ProjectItem? item) {
-        if (this.Control is not null && item is not null) {
-            if (existingViewmodels.TryGetValue(item.Path, out var toDecriment)) {
-                toDecriment = (toDecriment.model, toDecriment.count - 1);
-                if (toDecriment.count == 0) {
-                    existingViewmodels.Remove(item.Path);
-                } else {
-                    existingViewmodels[item.Path] = toDecriment;
-                }
-            }
-            this.Control = null;
-        }
+    private void ClearItem() {
+        this.ContentViewModel?.Dispose();
+        this.ContentViewModel = null;
+        this.Control = null;
     }
 
 
@@ -193,7 +177,7 @@ public sealed partial class ViewLoader : TabViewItem, IDisposable {
     private void Dispose(bool disposing) {
         if (!disposedValue) {
             if (disposing) {
-                ClearItem(this.Item);
+                ClearItem();
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer

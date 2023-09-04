@@ -16,13 +16,13 @@ namespace TileEditorTest.Model;
 
 internal class RootPlaceholderFile : ProjectItemContent, IProjectItemContent<RootPlaceholderFile> {
     public static ImmutableArray<Regex> SupportedFilePatterns { get; } = ImmutableArray<Regex>.Empty;
-    static Task<RootPlaceholderFile> IProjectItemContent<RootPlaceholderFile>.Load(ProjectPath path, ProjectViewModel project) => Task.FromResult(new RootPlaceholderFile());
+    static Task<RootPlaceholderFile> IProjectItemContent<RootPlaceholderFile>.Load(ProjectPath path, CoreViewModel project) => Task.FromResult(new RootPlaceholderFile());
 
 
 
     public static ProjectItemType Type => ProjectItemType.Other;
 
-    public Task Save(ProjectPath path, ProjectViewModel project) {
+    public Task Save(ProjectPath path, CoreViewModel project) {
         return Task.CompletedTask;
     }
 

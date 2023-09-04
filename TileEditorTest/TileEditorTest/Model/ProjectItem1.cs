@@ -15,7 +15,7 @@ public class ProjectItem<T> : ProjectItem where T : class, IProjectItemContent<T
 
     private Task<T>? ongoingTask;
 
-    public ProjectItem(ProjectPath path, ProjectViewModel project) : base(path, project) {
+    public ProjectItem(ProjectPath path, CoreViewModel project) : base(path, project) {
     }
 
     public new Task<T> Content {

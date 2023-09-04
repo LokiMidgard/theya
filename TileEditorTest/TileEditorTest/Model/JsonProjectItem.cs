@@ -23,7 +23,7 @@ namespace TileEditorTest.Model;
 public abstract class JsonProjectItem<T> : ProjectItemContent
     where T : JsonProjectItem<T>, IProjectItemContent<T> {
 
-    public async Task Save(ProjectPath path, ProjectViewModel project) {
+    public async Task Save(ProjectPath path, CoreViewModel project) {
         var file = await path.ToStorageFile(project);
         var projectPath = ProjectPath.From(file, project);
         var converter = new ProjectItemConverter(project, projectPath);
@@ -33,7 +33,7 @@ public abstract class JsonProjectItem<T> : ProjectItemContent
     }
 
 
-    protected static async Task<T> Load(ProjectPath path, ProjectViewModel project) {
+    protected static async Task<T> Load(ProjectPath path, CoreViewModel project) {
         var file = await path.ToStorageFile(project);
         var projectPath = ProjectPath.From(file, project);
         var converter = new ProjectItemConverter(project, projectPath);

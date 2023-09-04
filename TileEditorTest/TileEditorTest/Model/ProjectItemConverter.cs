@@ -11,10 +11,10 @@ using TileEditorTest.ViewModel;
 namespace TileEditorTest.Model;
 
 internal class ProjectItemConverter : JsonConverter<ProjectItem> {
-    private ProjectViewModel? project;
+    private CoreViewModel? project;
     private ProjectPath? projectPath; // this is for relative files, not currently implemented
 
-    public ProjectItemConverter(ProjectViewModel project, ProjectPath projectPath) {
+    public ProjectItemConverter(CoreViewModel project, ProjectPath projectPath) {
         this.project = project;
         this.projectPath = projectPath;
     }

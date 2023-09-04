@@ -21,7 +21,7 @@ internal partial class MapFile : JsonProjectItem<MapFile>, IProjectItemContent<M
     public List<ProjectItem<TileSetFile>> TileSets { get; set; } = new();
 
     public static ImmutableArray<Regex> SupportedFilePatterns { get; } = ImmutableArray.Create(MapExtensionRegex());
-    static Task<MapFile> IProjectItemContent<MapFile>.Load(ProjectPath path, ProjectViewModel project) => Load(path, project);
+    static Task<MapFile> IProjectItemContent<MapFile>.Load(ProjectPath path, CoreViewModel project) => Load(path, project);
     public static ProjectItemType Type => ProjectItemType.Map;
     [GeneratedRegex(".map.json$")]
     private static partial Regex MapExtensionRegex();
