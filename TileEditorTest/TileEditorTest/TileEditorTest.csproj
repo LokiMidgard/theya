@@ -12,6 +12,8 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<None Remove="View\Controls\NineGridPoints.xaml" />
+		<None Remove="View\Controls\TileImage.xaml" />
+		<None Remove="View\Controls\TileImageSelector.xaml" />
 		<None Remove="View\DocumentsPage.xaml" />
 		<None Remove="TileMapEditorControl.xaml" />
 		<None Remove="TileSetEditorControl.xaml" />
@@ -93,13 +95,21 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Page Update="View\Controls\TileImage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
+
+	<ItemGroup>
 	  <Page Update="View\Dialogs\NewFileDialogContent.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="ViewModel\NewFolder\" />
+	  <Page Update="View\Controls\TileImageSelector.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 
 	<ItemGroup>

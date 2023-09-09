@@ -180,30 +180,41 @@ where VM : IViewModel<OfFile, VM> {
     }
 
 
-    private static Dictionary<ProjectPath, (Task<IViewModel> task, int counter)> viewModels = new();
+    private static Dictionary<ProjectPath, (Task<IViewModel> task, int counterWrite, int counterRead)> viewModels = new();
     private static Dictionary<IViewModel, ProjectPath> reverseViewModels = new();
     private static ImmutableDictionary<Type, Func<ProjectItem, CoreViewModel, Task<IViewModel>>> prjectItemTypeToloadersViewModel;
 
-    [Obsolete("Call Dispose instead.")]
-    internal static void ReturnViewModel(IViewModel viewModel) {
+    private static async Task ReturnViewModel(IViewModel viewModel, bool read) {
         if (!reverseViewModels.TryGetValue(viewModel, out var path) || !viewModels.TryGetValue(path, out var cached)) {
             return;
         }
-        cached.counter--;
-        if (cached.counter == 0) {
+        if (read) {
+            cached.counterRead--;
+        } else {
+            cached.counterWrite--;
+        }
+        if (cached.counterWrite == 0 && cached.counterRead == 0) {
             viewModels.Remove(path);
             reverseViewModels.Remove(viewModel);
+            if (viewModel is IAsyncDisposable asyncDisposable) {
+                await asyncDisposable.DisposeAsync();
+            } else if (viewModel is IDisposable disposable) {
+                disposable.Dispose();
+            }
+        } else if (cached.counterWrite == 0 && !read) {
+            // if it was returned as writeMode, and we reached 0 reset
+            await viewModel.RestoreValuesFromModel();
         } else {
             viewModels[path] = cached;
         }
     }
 
-    internal static IViewModelLookup<OfFile> GetViewModel<OfFile>(ProjectItem<OfFile> file, CoreViewModel core)
+    internal static IViewModelLookup<OfFile> GetViewModel<OfFile>(ProjectItem<OfFile> file, CoreViewModel core, bool read = false)
         where OfFile : class, IProjectItemContent<OfFile> {
-        return new ViewModelLookup<OfFile>(file, core);
+        return new ViewModelLookup<OfFile>(file, core, read);
     }
-    internal static Task<IViewModel> GetViewModel(ProjectItem file, CoreViewModel core) {
-        return new ViewModelLookup(file, core).Of();
+    internal static IAsyncDisposable GetViewModel(ProjectItem file, CoreViewModel core, out Task<IViewModel> viewModel, bool read = false) {
+        return new ViewModelLookup(file, core, read).Of(out viewModel);
     }
 
 
@@ -212,41 +223,63 @@ where VM : IViewModel<OfFile, VM> {
     private partial class ViewModelLookup<OfFile> : IViewModelLookup<OfFile> where OfFile : class, IProjectItemContent<OfFile> {
         private ProjectItem<OfFile> file;
         private readonly CoreViewModel core;
+        private readonly bool read;
 
-        public ViewModelLookup(ProjectItem<OfFile> file, CoreViewModel core) {
+        public ViewModelLookup(ProjectItem<OfFile> file, CoreViewModel core, bool read) {
             this.file = file;
             this.core = core;
+            this.read = read;
         }
 
-        public Task<IViewModel> Of() {
+        public IAsyncDisposable Of(out Task<IViewModel> viewModel) {
             Task<IViewModel> result;
 
             if (viewModels.TryGetValue(file.Path, out var cached)) {
                 result = cached.task;
-                cached.counter++;
             } else {
                 result = prjectItemTypeToloadersViewModel[file.GetType()](file, core);
                 result.ContinueWith(t => reverseViewModels.Add(t.Result, file.Path));
-                cached = (result, 1);
+                cached = (result, 0, 0);
+            }
+            if (read) {
+                cached.counterRead++;
+            } else {
+                cached.counterWrite++;
             }
             viewModels[file.Path] = cached;
 
-            return result;
+            viewModel = result;
+            return new AsyncDisposable(async () => {
+                var data = await result;
+#pragma warning disable CS0618 // Type or member is obsolete
+                ReturnViewModel(data, read);
+#pragma warning restore CS0618 // Type or member is obsolete
+            });
         }
-        public Task<T> Of<T>(CoreViewModel core) where T : IViewModel<OfFile, T> {
+        public IAsyncDisposable Of<T>(out Task<T> viewModel) where T : IViewModel<OfFile, T> {
             Task<T> result;
 
             if (viewModels.TryGetValue(file.Path, out var cached)) {
                 result = cached.task.ContinueWith(t => (T)t.Result);
-                cached.counter++;
             } else {
                 result = T.Create(file, core);
                 result.ContinueWith(t => reverseViewModels.Add(t.Result, file.Path));
-                cached = (result.ContinueWith(t => (IViewModel)t.Result), 1);
+                cached = (result.ContinueWith(t => (IViewModel)t.Result), 0, 0);
+            }
+            if (read) {
+                cached.counterRead++;
+            } else {
+                cached.counterWrite++;
             }
             viewModels[file.Path] = cached;
+            viewModel = result;
 
-            return result;
+            return new AsyncDisposable(async () => {
+                var data = await result;
+#pragma warning disable CS0618 // Type or member is obsolete
+                ReturnViewModel(data, read);
+#pragma warning restore CS0618 // Type or member is obsolete
+            });
         }
     }
 
@@ -254,26 +287,39 @@ where VM : IViewModel<OfFile, VM> {
     private partial class ViewModelLookup : IViewModelLookup {
         private ProjectItem file;
         private readonly CoreViewModel core;
+        private readonly bool read;
 
-        public ViewModelLookup(ProjectItem file, CoreViewModel core) {
+        public ViewModelLookup(ProjectItem file, CoreViewModel core, bool read) {
             this.file = file;
             this.core = core;
+            this.read = read;
         }
 
-        public Task<IViewModel> Of() {
+        public IAsyncDisposable Of(out Task<IViewModel> viewModel) {
             Task<IViewModel> result;
 
             if (viewModels.TryGetValue(file.Path, out var cached)) {
                 result = cached.task;
-                cached.counter++;
             } else {
                 result = prjectItemTypeToloadersViewModel[file.GetType()](file, core);
                 result.ContinueWith(t => reverseViewModels.Add(t.Result, file.Path));
-                cached = (result, 1);
+                cached = (result, 0, 0);
             }
-            viewModels[file.Path] = cached;
+            if (read) {
+                cached.counterRead++;
+            } else {
+                cached.counterWrite++;
+            }
 
-            return result;
+            viewModels[file.Path] = cached;
+            viewModel = result;
+
+            return new AsyncDisposable(async () => {
+                var data = await result;
+#pragma warning disable CS0618 // Type or member is obsolete
+                await ReturnViewModel(data, read);
+#pragma warning restore CS0618 // Type or member is obsolete
+            });
         }
 
     }

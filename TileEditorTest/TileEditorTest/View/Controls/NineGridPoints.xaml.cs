@@ -25,6 +25,7 @@ using System.Collections;
 using System.ComponentModel;
 using Microsoft.UI.Xaml.Markup;
 using TileEditorTest.ViewModel;
+using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -33,7 +34,7 @@ namespace TileEditorTest.View.Controls;
 public sealed partial class NineGridPoints : UserControl {
 
     [Notify]
-    private TerranViewModel? selectedColor = new TerranViewModel() { Color = Color.FromArgb(255, 255, 0, 0) };
+    private TerranViewModel? selectedColor;
 
     //[Notify]
     //private Color? point1;
@@ -566,7 +567,7 @@ public sealed partial class NineGridPoints : UserControl {
         //}
     }
 
-    private void UserControl_PointerMoved(object sender, PointerRoutedEventArgs e) {
+    private async void UserControl_PointerMoved(object sender, PointerRoutedEventArgs e) {
         if (viewModel is null) {
             return;
         }
@@ -582,9 +583,9 @@ public sealed partial class NineGridPoints : UserControl {
         ////var currentPath = CalculatePathes(c)[0];
         //throw new NotImplementedException();
         //this.MousePaths = CalculatePathes(tempModel, new TranslateTransform() { X = tileX * viewModel.TileWidth, Y = tileY * viewModel.TileHeight });
-
+        
         var transform = new TranslateTransform() { X = tileX * viewModel.TileWidth, Y = tileY * viewModel.TileHeight };
-        TerranViewModel mouseOverTerrain = new() { Color = Color.FromArgb(255, 0, 255, 255) };
+        TerranViewModel mouseOverTerrain = new(this.viewModel.CoreViewModel) { Color = Color.FromArgb(255, 0, 255, 255) };
 
         var grid = new TerranViewModel[3, 3];
         grid[subX, subY] = mouseOverTerrain;
@@ -598,6 +599,9 @@ public sealed partial class NineGridPoints : UserControl {
     }
 
     private void GetTileSubPosition(Point e, out int tileX, out int tileY, out int subX, out int subY) {
+        if (viewModel is null) {
+            throw new InvalidOperationException();
+        }
         var position = e;
         tileX = (int)(position.X / viewModel.TileWidth);
         tileY = (int)(position.Y / viewModel.TileHeight);

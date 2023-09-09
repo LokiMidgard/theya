@@ -129,6 +129,7 @@ public sealed partial class ViewLoader : TabViewItem, IDisposable {
 
     //private static Dictionary<ProjectPath, (IViewModel model, int count)> existingViewmodels = new();
     private bool disposedValue;
+    private IAsyncDisposable? viewModelDisposable;
 
     private static void ItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
         var me = (ViewLoader)d;
@@ -141,13 +142,14 @@ public sealed partial class ViewLoader : TabViewItem, IDisposable {
             return;
         }
         this.IsLoading = true;
-        ClearItem();
+        await ClearItem();
         this.ContentViewModel = null;
 
         if (newItem is not null && ProjectViewModel is not null) {
-            var vm = await App.GetViewModel(newItem, ProjectViewModel);
+            this.viewModelDisposable = App.GetViewModel(newItem, ProjectViewModel, out var vmTask);
+            var vm = await vmTask;
             if (disposedValue) { // explizitly check again after await
-                vm.Dispose();
+                await viewModelDisposable.DisposeAsync();
                 return;
             }
             this.ContentViewModel = vm;
@@ -158,8 +160,10 @@ public sealed partial class ViewLoader : TabViewItem, IDisposable {
         this.IsLoading = false;
     }
 
-    private void ClearItem() {
-        this.ContentViewModel?.Dispose();
+    private async Task ClearItem() {
+        if (viewModelDisposable is not null) {
+            await this.viewModelDisposable.DisposeAsync();
+        }
         this.ContentViewModel = null;
         this.Control = null;
     }

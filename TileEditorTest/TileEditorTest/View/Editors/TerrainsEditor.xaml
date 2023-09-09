@@ -4,20 +4,20 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:TileEditorTest.View.Editors"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls" xmlns:viewmodel="using:TileEditorTest.ViewModel"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls" xmlns:viewmodel="using:TileEditorTest.ViewModel" xmlns:controls1="using:TileEditorTest.View.Controls"
     mc:Ignorable="d">
 
-    <controls:ListDetailsView ItemsSource="{x:Bind ViewModel.Terrans}">
+    <controls:ListDetailsView ItemsSource="{x:Bind ViewModel.Terrains,Mode=OneWay}">
         <controls:ListDetailsView.ListHeader>
             <CommandBar>
-                <AppBarButton Icon="Add"  Command="{x:Bind ViewModel.AddCommand}" />
+                <AppBarButton Icon="Add"  Command="{x:Bind ViewModel.AddCommand,Mode=OneWay}" />
             </CommandBar>
         </controls:ListDetailsView.ListHeader>
         <controls:ListDetailsView.ItemTemplate>
             <DataTemplate x:DataType="viewmodel:TerranViewModel">
                 <StackPanel Orientation="Horizontal">
                     <Border Width="24" Height="24" Margin="0,0,8,0" BorderThickness="1" BorderBrush="{ThemeResource AppBarItemForegroundThemeBrush}" >
-                        <Image/>
+                        <controls1:TileImage ViewModel="{x:Bind ImageSelectorViewModel,Mode=OneWay}"/>
                     </Border>
                     <StackPanel>
                         <TextBlock Text="{x:Bind Name, Mode=OneWay}" ></TextBlock>
@@ -49,6 +49,17 @@
                         Color="{x:Bind Color, Mode=TwoWay}" />
                         <TextBlock Text="Editor Fill Opacity"/>
                         <Slider Value="{x:Bind FillTransparency, Mode=TwoWay}" Maximum="1" SmallChange="0.01" LargeChange="0.1" />
+                        <Button Tapped="Button_Tapped">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="24" Height="24" Margin="0,0,8,0" BorderThickness="1" BorderBrush="{ThemeResource AppBarItemForegroundThemeBrush}" >
+                                    <controls1:TileImage ViewModel="{x:Bind ImageSelectorViewModel,Mode=OneWay}"/>
+                                </Border>
+                                <TextBlock Text="Select Tile" />
+                            </StackPanel>
+                        </Button>
+                        <ContentDialog CloseButtonText="Close">
+                            <controls1:TileImageSelector ViewModel="{x:Bind ImageSelectorViewModel,Mode=OneWay}"/>
+                        </ContentDialog>
                     </StackPanel>
                 </ScrollViewer>
             </DataTemplate>

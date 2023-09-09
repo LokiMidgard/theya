@@ -1,0 +1,23 @@
+﻿<UserControl
+    x:Class="TileEditorTest.View.Controls.TileImage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:TileEditorTest.View.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Viewbox>
+        <Image Margin="{x:Bind ToMargin(ViewModel.X,ViewModel.Y,ViewModel.SelectedViewModel.TileWidth,ViewModel.SelectedViewModel.TileHeight) ,Mode=OneWay}"
+               HorizontalAlignment="Left"
+               Source="{x:Bind ViewModel.SelectedViewModel.ImageSource, Mode=OneWay, FallbackValue={x:Null}}" 
+               Stretch="None" 
+               Width="{x:Bind ToWidth(ViewModel.X,ViewModel.Y,ViewModel.SelectedViewModel.TileWidth,ViewModel.SelectedViewModel.TileHeight) ,Mode=OneWay}" 
+               Height="{x:Bind ToHeight(ViewModel.X,ViewModel.Y,ViewModel.SelectedViewModel.TileWidth,ViewModel.SelectedViewModel.TileHeight) ,Mode=OneWay}" 
+               RenderTransform="{x:Bind ToTransform(ViewModel.X,ViewModel.Y,ViewModel.SelectedViewModel.TileWidth,ViewModel.SelectedViewModel.TileHeight) ,Mode=OneWay}">
+            <Image.Clip>
+                <RectangleGeometry  Rect="{x:Bind ToRect(ViewModel.X,ViewModel.Y,ViewModel.SelectedViewModel.TileWidth,ViewModel.SelectedViewModel.TileHeight) ,Mode=OneWay}" ></RectangleGeometry>
+            </Image.Clip>
+        </Image>
+    </Viewbox>
+</UserControl>

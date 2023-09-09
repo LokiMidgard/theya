@@ -1,4 +1,6 @@
-﻿using Microsoft.UI.Dispatching;
+﻿using InterfaceGenerator;
+
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -18,29 +20,49 @@ using System.Windows.Input;
 
 using TileEditorTest.Model;
 using TileEditorTest.View;
+using TileEditorTest.ViewModel.Controls;
 
 using Windows.System.Threading;
 using Windows.UI;
 
 namespace TileEditorTest.ViewModel;
 
+[GenerateAutoInterface]
+public abstract partial class ViewModel : IViewModel {
+    public CoreViewModel CoreViewModel { get; }
 
-public interface IViewModel : INotifyPropertyChanged, IDisposable {
-    public CoreViewModel Project { get; }
     public ICommand Save { get; }
-    public bool HasChanges { get; }
 
-    void IDisposable.Dispose() {
-#pragma warning disable CS0618 // Type or member is obsolete
-        App.ReturnViewModel(this);
-#pragma warning restore CS0618 // Type or member is obsolete
+    [Notify(global::PropertyChanged.SourceGenerator.Setter.Protected)]
+    private bool hasChanges;
+
+    private void OnHasChangesChanged() {
+        ((StandardUICommand)Save).NotifyCanExecuteChanged();
     }
 
-    public new void Dispose() {
-        ((IDisposable)this).Dispose();
+    public ViewModel(CoreViewModel project) {
+        StandardUICommand save = new(StandardUICommandKind.Save);
+        save.ExecuteRequested += async (sender, e) => await SaveValuesToModel();
+        save.CanExecuteRequested += (sender, e) => e.CanExecute = HasChanges;
+        this.Save = save;
+        CoreViewModel = project;
     }
 
+    protected abstract Task SaveValuesToModel();
+    public abstract Task RestoreValuesFromModel();
 }
+
+public abstract partial class ViewModel<OfFile, VM> : ViewModel
+    where OfFile : class, IProjectItemContent<OfFile>
+    where VM : ViewModel<OfFile, VM>, IViewModel<OfFile, VM> {
+    protected ViewModel(CoreViewModel project) : base(project) {
+    }
+}
+
+public partial interface IViewModel : INotifyPropertyChanged {
+    public bool HasChanges { get; }
+}
+
 public interface IViewModel<OfFile, ViewModel> : IViewModel
     where OfFile : class, IProjectItemContent<OfFile>
     where ViewModel : IViewModel<OfFile, ViewModel> {
@@ -162,7 +184,7 @@ public enum TerranType {
     Wall,
     Cut
 }
-public partial class TerranViewModel {
+public sealed partial class TerranViewModel : IAsyncDisposable {
     [Notify]
     private Color color;
     [Notify]
@@ -176,6 +198,12 @@ public partial class TerranViewModel {
     [Notify]
     private TerranType type;
 
+    internal TileImageSelectorViewModel ImageSelectorViewModel { get; }
+
+    public TerranViewModel(CoreViewModel core) {
+        ImageSelectorViewModel = new(core);
+    }
+
     private void OnFillTransparencyChanged() {
         OnColorChanged();
     }
@@ -183,18 +211,16 @@ public partial class TerranViewModel {
         this.Stroke = color;
         this.Fill = Color.FromArgb((byte)(255 * fillTransparency), color.R, color.G, color.B);
     }
+
+    public ValueTask DisposeAsync() {
+        return ImageSelectorViewModel.DisposeAsync();
+    }
 }
 
-public partial class TileSetViewModel : DependencyObject, IViewModel<TileSetFile, TileSetViewModel> {
+public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>, IViewModel<TileSetFile, TileSetViewModel> {
 
 
-    public ICommand Save { get; }
 
-    [Notify]
-    private bool hasChanges;
-    private void OnHasChangesChanged() {
-        ((StandardUICommand)Save).NotifyCanExecuteChanged();
-    }
 
     [Notify]
     private int tileHeight;
@@ -224,9 +250,11 @@ public partial class TileSetViewModel : DependencyObject, IViewModel<TileSetFile
 
         if (SelectedImage is null) {
             this.ImageSource = null;
+            TileModel = Array.Empty<TileViewModel>();
+
         } else {
             BitmapImage image = new() {
-                UriSource = new Uri(SelectedImage.Path.SystemPath(Project)),
+                UriSource = new Uri(SelectedImage.Path.SystemPath(CoreViewModel)),
             };
             this.ImageSource = image;
             var content = await SelectedImage.Content;
@@ -263,34 +291,28 @@ public partial class TileSetViewModel : DependencyObject, IViewModel<TileSetFile
     private readonly TileSetFile tileSet;
     private readonly ProjectItem<TileSetFile> projectItem;
 
-    public TileSetViewModel(TileSetFile tileSet, ProjectItem<TileSetFile> projectItem, CoreViewModel project, ObservableCollection<ProjectItem<ImageFile>> allImages) {
+    public TileSetViewModel(TileSetFile tileSet, ProjectItem<TileSetFile> projectItem, CoreViewModel project, ObservableCollection<ProjectItem<ImageFile>> allImages) : base(project) {
         this.tileSet = tileSet;
         this.projectItem = projectItem;
-        Project = project;
         this.AllImages = new ReadOnlyObservableCollection<ProjectItem<ImageFile>>(allImages);
-
         this.tileModel = Array.Empty<TileViewModel>();
-
-        StandardUICommand save = new(StandardUICommandKind.Save);
-        save.ExecuteRequested += (sender, e) => SaveValuesToModel();
-        save.CanExecuteRequested += (sender, e) => e.CanExecute = HasChanges;
-        this.Save = save;
-
-        RefreshFromModel();
+        RestoreValuesFromModel();
     }
 
-    private void RefreshFromModel() {
+    public override Task RestoreValuesFromModel() {
         this.SelectedImage = tileSet.Image;
         this.TileWidth = tileSet.TileSize?.Width ?? 32;
         this.TileHeight = tileSet.TileSize?.Height ?? 32;
         UpdateHasChanges();
+        return Task.CompletedTask;
     }
 
-    private Task SaveValuesToModel() {
+
+    protected override Task SaveValuesToModel() {
         tileSet.Image = SelectedImage;
         tileSet.TileSize = new() { Width = TileWidth, Height = TileHeight };
         UpdateHasChanges();
-        return tileSet.Save(projectItem.Path, Project);
+        return tileSet.Save(projectItem.Path, CoreViewModel);
     }
 
     private void UpdateHasChanges() {
@@ -302,7 +324,6 @@ public partial class TileSetViewModel : DependencyObject, IViewModel<TileSetFile
 
     }
 
-    public CoreViewModel Project { get; }
 
     public ReadOnlyObservableCollection<ProjectItem<ImageFile>> AllImages { get; }
 

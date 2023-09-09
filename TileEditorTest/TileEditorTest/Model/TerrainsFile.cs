@@ -34,7 +34,9 @@ internal partial class TerrainsFile : JsonProjectItem<TerrainsFile>, IProjectIte
     }
 }
 
-internal record Terrain(string Name, TerranType Type, TerrainColor Color, double Opacity);
+internal record TileImage(string TileSetPath, int id);
+
+internal record Terrain(string Name, TerranType Type, TerrainColor Color, double Opacity, TileImage? Image);
 
 internal record TerrainColor(string Color) {
     public static implicit operator Color(TerrainColor color) { return color.Color.ToColor(); }

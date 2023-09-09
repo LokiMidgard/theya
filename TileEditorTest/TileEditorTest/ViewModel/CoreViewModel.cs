@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -29,12 +30,12 @@ public partial class CoreViewModel {
     public ProjectTreeElementViewModel Root { get; private set; }
     public IEnumerable<ProjectTreeElementViewModel> RootItemsSource => Enumerable.Repeat(Root, 1);
 
-    private ImmutableDictionary<ProjectItemType, MultiThreadObservableCollection<ProjectPath>> pathByType;
+    private ImmutableDictionary<ProjectItemType, ObservableCollection<ProjectPath>> pathByType;
 
     private static readonly List<(Regex pattern, Func<ProjectPath, CoreViewModel, Task<IProjectItemContent>> loders)> loaders = new();
 
-    public event Func<ProjectItemType, Predicate<string>?, Task<string?>> OnShowNewFileDialog;
-    public event Func<ProjectItem, Task> OnOpenFile;
+    public event Func<ProjectItemType, Predicate<string>?, Task<string?>>? OnShowNewFileDialog;
+    public event Func<ProjectItem, Task>? OnOpenFile;
 
 
     internal Task OpenFile(ProjectItem type) {
@@ -49,7 +50,7 @@ public partial class CoreViewModel {
         InitProjectItemContentLoader();
     }
     private CoreViewModel(Func<CoreViewModel, Task<ProjectTreeElementViewModel>> root, ProjectStruct projectData, StorageFolder rootFolder, TaskCompletionSource waitForLoadReady) {
-        this.pathByType = ProjectItemTypeEnumExtensions.GetValuesFast().ToImmutableDictionary(x => x, x => new MultiThreadObservableCollection<ProjectPath>());
+        this.pathByType = ProjectItemTypeEnumExtensions.GetValuesFast().ToImmutableDictionary(x => x, x => new ObservableCollection<ProjectPath>());
         this.Name = projectData.Name ?? "Unbenannt";
         this.RootFolder = rootFolder;
         Root = null!;// This will be set before the create method returns
@@ -116,9 +117,9 @@ public partial class CoreViewModel {
         return projectViewModel;
     }
 
-    public MultiThreadObservableCollection<ProjectPath> GetProjectItemCollectionOfType<T>()
+    public ReadOnlyObservableCollection<ProjectPath> GetProjectItemCollectionOfType<T>()
         where T : class, IProjectItemContent<T> {
-        return this.pathByType[T.Type];
+        return new(this.pathByType[T.Type]);
     }
 
     internal ProjectItem<T>? GetProjectItem<T>(ProjectPath path) where T : class, IProjectItemContent<T> {

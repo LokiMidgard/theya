@@ -1,4 +1,6 @@
-﻿using Microsoft.UI.Xaml;
+﻿using CommunityToolkit.WinUI.UI;
+
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
@@ -34,5 +36,11 @@ internal sealed partial class TerrainsEditor : UserControl, IView<TerrainsFile, 
 
     static TerrainsEditor IView<TerrainsFile, TerrainsViewModel, TerrainsEditor>.Create(TerrainsViewModel viewModel) {
         return new(viewModel);
+    }
+
+    private async void Button_Tapped(object sender, TappedRoutedEventArgs e) {
+        Button button = (Button)sender;
+        StackPanel stackPanel = (StackPanel)button.Parent;
+        await stackPanel.Children.OfType<ContentDialog>().Single().ShowAsync();
     }
 }
