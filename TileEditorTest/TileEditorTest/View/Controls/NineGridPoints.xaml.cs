@@ -96,6 +96,7 @@ public sealed partial class NineGridPoints : UserControl {
         }
         if (newValue is not null) {
             newValue.PropertyChanged += ViewModelPropertyChanged;
+            ViewModelPropertyChanged(this, new PropertyChangedEventArgs(nameof(ViewModel.TileModel)));
         }
         RecalculatePath();
     }
@@ -141,7 +142,11 @@ public sealed partial class NineGridPoints : UserControl {
                 for (int tileY = 0; tileY < viewModel.Rows; tileY++) {
                     for (int x = 0; x < 3; x++) {
                         for (global::System.Int32 y = 0; y < 3; y++) {
-                            colorsToHandle[tileX * 3 + x, tileY * 3 + y] = viewModel.TileModel[tileX + tileY * viewModel.Columns].Grid[x, y];
+                            var tileModelIndex = tileX + tileY * viewModel.Columns;
+                            if (tileModelIndex < viewModel.TileModel.Length) {
+                                // When changing Propertys the Events gtt fired in not quite valid states
+                                colorsToHandle[tileX * 3 + x, tileY * 3 + y] = viewModel.TileModel[tileModelIndex].Grid[x, y];
+                            }
                         }
                     }
                 }
@@ -507,8 +512,8 @@ public sealed partial class NineGridPoints : UserControl {
         string path = builder.ToString();
 
         // removing handled color
-        for (int x = 0; x < colorsToHandle.GetLength(1); x++) {
-            for (int y = 0; y < colorsToHandle.GetLength(0); y++) {
+        for (int x = 0; x < colorsToHandle.GetLength(0); x++) {
+            for (int y = 0; y < colorsToHandle.GetLength(1); y++) {
                 if (handleSubTiles[x, y]) {
                     colorsToHandle[x, y] = negate ? currentColor : null;
                 }
@@ -583,9 +588,9 @@ public sealed partial class NineGridPoints : UserControl {
         ////var currentPath = CalculatePathes(c)[0];
         //throw new NotImplementedException();
         //this.MousePaths = CalculatePathes(tempModel, new TranslateTransform() { X = tileX * viewModel.TileWidth, Y = tileY * viewModel.TileHeight });
-        
+
         var transform = new TranslateTransform() { X = tileX * viewModel.TileWidth, Y = tileY * viewModel.TileHeight };
-        TerranViewModel mouseOverTerrain = new(this.viewModel.CoreViewModel) { Color = Color.FromArgb(255, 0, 255, 255) };
+        TerranViewModel mouseOverTerrain = new(this.viewModel.CoreViewModel, Guid.NewGuid(), viewModel.ProjectItem.Path) { Color = Color.FromArgb(255, 0, 255, 255) };
 
         var grid = new TerranViewModel[3, 3];
         grid[subX, subY] = mouseOverTerrain;
@@ -698,7 +703,7 @@ file class PathBuilder {
     }
     public PathBuilder EllipticalArc(Vector2 size, double rotationAngle, bool isLargeArc, bool sweepDirectionFlag, Vector2 endPoint, CommandType type = CommandType.Relativ) {
         Append("a", type);
-        Append(size, type);
+        Append(size, type, true);  // I would think that x and y should not be switched??
         Append(rotationAngle);
         Append(isLargeArc);
         Append(sweepDirectionFlag);
@@ -721,8 +726,11 @@ file class PathBuilder {
     private void Append(string command, CommandType type) {
         builder.Append($"{(type == CommandType.Relativ ? command.ToLower() : command.ToUpper())}");
     }
-    private void Append(Vector2 vector, CommandType type) {
+    private void Append(Vector2 vector, CommandType type, bool switchComponents = false) {
         var transformed = GetTransform(type).TransformPoint(new(vector.X, vector.Y));
+        if (switchComponents) {
+            transformed = new(transformed.Y, transformed.X);
+        }
         builder.Append(Invariant($"{transformed.X},{transformed.Y} "));
     }
     private void Append(double value) {

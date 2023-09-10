@@ -28,6 +28,7 @@ public abstract class JsonProjectItem<T> : ProjectItemContent
         var projectPath = ProjectPath.From(file, project);
         var converter = new ProjectItemConverter(project, projectPath);
         using var stream = await file.OpenStreamForWriteAsync();
+        stream.SetLength(0);
         JsonSerializerOptions options = GenerateSterilizerOptions(converter);
         await JsonSerializer.SerializeAsync<T>(stream, (T)this, options);
     }
@@ -43,11 +44,17 @@ public abstract class JsonProjectItem<T> : ProjectItemContent
     }
 
     private static JsonSerializerOptions GenerateSterilizerOptions(ProjectItemConverter converter) {
-        JsonSerializerOptions subOptions = new() { Converters = { converter } };
+        JsonSerializerOptions subOptions = new() {
+            Converters = { converter },
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+            WriteIndented = true,
+        };
         JsonSerializerOptions options = new() {
             Converters = { converter },
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+            WriteIndented = true,
             TypeInfoResolver = JsonTypeInfoResolver.Combine(new ProjectItemJsonContext(subOptions),
-                                                            new DefaultJsonTypeInfoResolver())
+                                                            new DefaultJsonTypeInfoResolver()),
         };
         return options;
     }

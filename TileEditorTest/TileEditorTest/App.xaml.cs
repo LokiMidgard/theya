@@ -201,10 +201,11 @@ where VM : IViewModel<OfFile, VM> {
             } else if (viewModel is IDisposable disposable) {
                 disposable.Dispose();
             }
-        } else if (cached.counterWrite == 0 && !read) {
-            // if it was returned as writeMode, and we reached 0 reset
-            await viewModel.RestoreValuesFromModel();
         } else {
+            if (cached.counterWrite == 0 && !read) {
+                // if it was returned as writeMode, and we reached 0 reset
+                await viewModel.RestoreValuesFromModel();
+            }
             viewModels[path] = cached;
         }
     }

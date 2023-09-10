@@ -25,6 +25,7 @@ public partial class TileSetFile : JsonProjectItem<TileSetFile>, IProjectItemCon
     public static ProjectItemType Type => ProjectItemType.TileSet;
 
     public TileSize? TileSize { get; set; }
+    public int Columns { get; set; }
 
     public TileData[] TileData { get; set; } = Array.Empty<TileData>();
 
@@ -43,4 +44,5 @@ public partial class TileSetFile : JsonProjectItem<TileSetFile>, IProjectItemCon
 
 public record struct TileSize(int Width, int Height);
 public record struct TileData(TerrainIdData Terrain);
-public record struct TerrainIdData(int TopLeft, int Top, int TopRight, int Left, int Center, int Right, int BottomLeft, int Bottom, int BottomRight);
+public record struct TerrainIdData(TerrainId? TopLeft, TerrainId? Top, TerrainId? TopRight, TerrainId? Left, TerrainId? Center, TerrainId? Right, TerrainId? BottomLeft, TerrainId? Bottom, TerrainId? BottomRight);
+public record TerrainId(string Terrain, int Index);

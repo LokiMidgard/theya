@@ -4,7 +4,11 @@
 using CommunityToolkit.WinUI.Helpers;
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -36,7 +40,40 @@ internal partial class TerrainsFile : JsonProjectItem<TerrainsFile>, IProjectIte
 
 internal record TileImage(string TileSetPath, int x, int y);
 
-internal record Terrain(string Name, TerranType Type, TerrainColor Color, int Opacity, TileImage? Image);
+internal record Terrain(string Name, TerranType Type, TerrainColor Color, int Opacity, TileImage? Image) {
+
+    private Guid? guid;
+    /// <summary>
+    /// Used to identify changes on a Model. If Every Value is changed and maybe the position, we still need to find the original file.
+    /// </summary>
+    [JsonIgnore]
+    public Guid FileLoadGuid {
+        get {
+            guid ??= Guid.NewGuid();
+            return guid.Value;
+        }
+        set => guid = value;
+    }
+
+    public static readonly IEqualityComparer<Terrain> IdEqualityComparer = new IdComparerImpl();
+
+    private class IdComparerImpl : IEqualityComparer<Terrain> {
+        public bool Equals(Terrain? x, Terrain? y) {
+            if (ReferenceEquals(x, y)) {
+                return true;
+            }
+            if (x is null || y is null) {
+                return false;
+            }
+            return EqualityComparer<Guid?>.Default.Equals(x.FileLoadGuid, y.FileLoadGuid);
+        }
+
+        public int GetHashCode([DisallowNull] Terrain obj) {
+            return obj.FileLoadGuid.GetHashCode();
+        }
+    }
+
+}
 
 internal record TerrainColor(string Color) {
     public static implicit operator Color(TerrainColor color) { return color.Color.ToColor(); }

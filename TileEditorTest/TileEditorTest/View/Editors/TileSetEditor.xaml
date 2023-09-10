@@ -81,9 +81,9 @@
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Grid.Column="0"  Text="Width" HorizontalAlignment="Right" />
             <TextBlock Grid.Row="0" Grid.Column="1" Text="×" Margin="4,0,4,0" />
-            <TextBox   Grid.Row="1" Grid.Column="0" Text="{x:Bind ViewModel.TileHeight,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox   Grid.Row="1" Grid.Column="0" Text="{x:Bind ViewModel.TileWidth,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" />
             <TextBlock Grid.Row="0" Grid.Column="2" Text="Height" />
-            <TextBox   Grid.Row="1" Grid.Column="2" Text="{x:Bind ViewModel.TileWidth,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox   Grid.Row="1" Grid.Column="2" Text="{x:Bind ViewModel.TileHeight,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
         </Grid>
 
@@ -103,7 +103,7 @@
                 <Grid HorizontalAlignment="Left" VerticalAlignment="Top">
 
 
-                    <controls:NineGridPoints x:Name="grid" ViewModel="{x:Bind ViewModel}" SelectedColor="{x:Bind ConvertTerrainViewModel(terrainsSelection.SelectedItem), Mode=OneWay}" ></controls:NineGridPoints>
+                    <controls:NineGridPoints x:Name="grid" ViewModel="{x:Bind ViewModel,Mode=OneWay}" SelectedColor="{x:Bind ConvertTerrainViewModel(terrainsSelection.SelectedItem), Mode=OneWay}" />
 
 
 
@@ -112,6 +112,13 @@
             </controlsComunity:LayoutTransformControl>
 
         </ScrollViewer>
+
+        <!--<Viewbox Width="300">
+            <Grid Width="40" Height="40">
+                
+        <Path Data="M20,20 a5,10 90 0 1 10,-5 " Stroke="Green" StrokeThickness="1" Fill="BlueViolet" ></Path>
+            </Grid>
+        </Viewbox>-->
 
     </Grid>
 

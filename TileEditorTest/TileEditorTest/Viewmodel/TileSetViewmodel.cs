@@ -20,6 +20,7 @@ using System.Windows.Input;
 
 using TileEditorTest.Model;
 using TileEditorTest.View;
+using TileEditorTest.View.Controls;
 using TileEditorTest.ViewModel.Controls;
 
 using Windows.System.Threading;
@@ -197,11 +198,19 @@ public sealed partial class TerranViewModel : IAsyncDisposable {
     private string name = "";
     [Notify]
     private TerranType type;
+    [Notify]
+    private int index;
+
+    public ProjectPath TerrainFile { get; }
 
     internal TileImageSelectorViewModel ImageSelectorViewModel { get; }
+    public Guid Id { get; }
 
-    public TerranViewModel(CoreViewModel core) {
+
+    public TerranViewModel(CoreViewModel core, Guid id, ProjectPath terrainFile) {
         ImageSelectorViewModel = new(core);
+        Id = id;
+        TerrainFile = terrainFile;
     }
 
     private void OnFillTransparencyChanged() {
@@ -217,7 +226,7 @@ public sealed partial class TerranViewModel : IAsyncDisposable {
     }
 }
 
-public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>, IViewModel<TileSetFile, TileSetViewModel> {
+public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>, IViewModel<TileSetFile, TileSetViewModel>, IAsyncDisposable {
 
 
 
@@ -251,8 +260,11 @@ public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>
         await LoadTileModels();
     }
 
+    private readonly List<IAsyncDisposable> disposeTerransViewModel = new();
+
     private async Task LoadTileModels() {
         ClearTileModels();
+        this.ImageSource = null;
         if (SelectedImage is null) {
             return;
         }
@@ -277,7 +289,7 @@ public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>
         foreach (var item in tileModel) {
             item.PropertyChanged -= TileModelChanged;
         }
-        this.ImageSource = null;
+
         TileModel = Array.Empty<TileViewModel>();
     }
 
@@ -296,39 +308,98 @@ public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>
         }
     }
 
-
-
-    private readonly TileSetFile tileSet;
-    private readonly ProjectItem<TileSetFile> projectItem;
-
     public TileSetViewModel(TileSetFile tileSet, ProjectItem<TileSetFile> projectItem, CoreViewModel project, ObservableCollection<ProjectItem<ImageFile>> allImages) : base(project) {
-        this.tileSet = tileSet;
-        this.projectItem = projectItem;
+        this.TileSet = tileSet;
+        this.ProjectItem = projectItem;
         this.AllImages = new ReadOnlyObservableCollection<ProjectItem<ImageFile>>(allImages);
         this.tileModel = Array.Empty<TileViewModel>();
         RestoreValuesFromModel();
     }
 
-    public override Task RestoreValuesFromModel() {
-        this.SelectedImage = tileSet.Image;
-        this.TileWidth = tileSet.TileSize?.Width ?? 32;
-        this.TileHeight = tileSet.TileSize?.Height ?? 32;
+    public override async Task RestoreValuesFromModel() {
+        this.SelectedImage = TileSet.Image;
+        this.TileWidth = TileSet.TileSize?.Width ?? 32;
+        this.TileHeight = TileSet.TileSize?.Height ?? 32;
+        this.Columns = TileSet.Columns;
+
+        if (this.Columns == 0) {
+            return;
+        }
+        // release tho old models...
+        await DisposeTerrainsViewModels();
+
+        Dictionary<ProjectPath, TerrainsViewModel> vmLookup = new();
+
+        ClearTileModels();
+
+        this.TileModel = await Task.WhenAll((IEnumerable<Task<TileViewModel>>)TileSet.TileData.Select(async (model, index) => {
+            var result = new TileViewModel(index % columns, index / columns) {
+                LeftTop = await GetPointViewModel(vmLookup, model.Terrain.TopLeft),
+                Top = await GetPointViewModel(vmLookup, model.Terrain.Top),
+                RightTop = await GetPointViewModel(vmLookup, model.Terrain.TopRight),
+                Left = await GetPointViewModel(vmLookup, model.Terrain.Left),
+                Center = await GetPointViewModel(vmLookup, model.Terrain.Center),
+                Right = await GetPointViewModel(vmLookup, model.Terrain.Right),
+                LeftBottom = await GetPointViewModel(vmLookup, model.Terrain.BottomLeft),
+                Bottom = await GetPointViewModel(vmLookup, model.Terrain.Bottom),
+                RightBottom = await GetPointViewModel(vmLookup, model.Terrain.BottomRight),
+            };
+            result.PropertyChanged += TileModelChanged;
+            return result;
+
+            async Task<TerranViewModel?> GetPointViewModel(Dictionary<ProjectPath, TerrainsViewModel> vmLookup, TerrainId? dataHolder) {
+                if (dataHolder is null) {
+                    return null;
+                }
+                if (!vmLookup.TryGetValue(dataHolder.Terrain, out var vm)) {
+                    var disposable = App.GetViewModel(file: CoreViewModel.GetProjectItem<TerrainsFile>(dataHolder.Terrain)
+                                                            ?? throw new InvalidOperationException($"Did not find ProjectItem to file {dataHolder.Terrain}"),
+                                                      core: CoreViewModel,
+                                                      read: true)
+                                        .Of<TerrainsViewModel>(out var vmTask);
+                    vm = await vmTask;
+                    disposeTerransViewModel.Add(disposable);
+                }
+                var result = vm.Terrains[dataHolder.Index];
+                return result;
+            }
+        }));
+
         UpdateHasChanges();
-        return Task.CompletedTask;
+
     }
 
+    private async Task DisposeTerrainsViewModels() {
+        foreach (var item in disposeTerransViewModel.ToArray()) {
+            disposeTerransViewModel.Remove(item);
+            await item.DisposeAsync();
+        }
+    }
 
     protected override Task SaveValuesToModel() {
-        tileSet.Image = SelectedImage;
-        tileSet.TileSize = new() { Width = TileWidth, Height = TileHeight };
+        TileSet.Image = SelectedImage;
+        TileSet.TileSize = new() { Width = TileWidth, Height = TileHeight };
+        TileSet.Columns = this.Columns;
+        TileSet.TileData = this.TileModel.Select(CreateTileModelData).ToArray();
         UpdateHasChanges();
-        return tileSet.Save(projectItem.Path, CoreViewModel);
+        return TileSet.Save(ProjectItem.Path, CoreViewModel);
+    }
+
+    private static TileData CreateTileModelData(TileViewModel x) {
+        TileData tileData = new TileData(new TerrainIdData(GetIdData(x.LeftTop), GetIdData(x.Top), GetIdData(x.RightTop), GetIdData(x.Left), GetIdData(x.Center), GetIdData(x.Right), GetIdData(x.LeftBottom), GetIdData(x.Bottom), GetIdData(x.RightBottom)));
+        return tileData;
+        static TerrainId? GetIdData(TerranViewModel? x) {
+            return x is not null ? new(x.TerrainFile, x.Index) : null;
+        }
     }
 
     private void UpdateHasChanges() {
-        this.HasChanges = this.SelectedImage != tileSet.Image ||
-        this.TileWidth != (tileSet.TileSize?.Width ?? 32) ||
-        this.TileHeight != (tileSet.TileSize?.Height ?? 32);
+        this.HasChanges = this.SelectedImage != TileSet.Image ||
+        this.TileWidth != (TileSet.TileSize?.Width ?? 32) ||
+        this.TileHeight != (TileSet.TileSize?.Height ?? 32) ||
+        this.TileModel.Length != TileSet.TileData.Length ||
+        !this.TileModel.Select(CreateTileModelData).SequenceEqual(TileSet.TileData)
+        ;
 
         //this.TileModel.Length != tileSet.TileData.Length || TileModel.Select(x=> new TileData(new TerrainIdData(x.LeftTop, x.Top, x.RightTop, x.LeftTop, x.Center, x.Right, x.LeftBottom, x.Bottom, x.RightBottom.))
 
@@ -337,7 +408,9 @@ public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>
 
     public ReadOnlyObservableCollection<ProjectItem<ImageFile>> AllImages { get; }
 
+    public ProjectItem<TileSetFile> ProjectItem { get; }
 
+    public TileSetFile TileSet { get; }
 
     public static async Task<TileSetViewModel> Create(ProjectItem<TileSetFile> projectItem, CoreViewModel project) {
         var tileSet = await projectItem.Content;
@@ -353,5 +426,8 @@ public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>
         return new TileSetViewModel(tileSet, projectItem, project, allImages);
     }
 
-
+    public async ValueTask DisposeAsync() {
+        GC.SuppressFinalize(this);
+        await DisposeTerrainsViewModels();
+    }
 }

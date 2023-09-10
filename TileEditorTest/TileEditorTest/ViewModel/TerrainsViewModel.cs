@@ -18,7 +18,6 @@ using Windows.UI;
 namespace TileEditorTest.ViewModel;
 internal sealed partial class TerrainsViewModel : ViewModel<TerrainsFile, TerrainsViewModel>, IViewModel<TerrainsFile, TerrainsViewModel>, IAsyncDisposable {
     private TerrainsFile model;
-    private ProjectItem<TerrainsFile> item;
 
     public ReadOnlyObservableCollection<TerranViewModel> Terrains { get; }
     private ObservableCollection<TerranViewModel> terrains = new();
@@ -26,15 +25,17 @@ internal sealed partial class TerrainsViewModel : ViewModel<TerrainsFile, Terrai
 
     public ICommand AddCommand { get; }
 
+    internal ProjectItem<TerrainsFile> Item { get; }
+
     public TerrainsViewModel(TerrainsFile content, ProjectItem<TerrainsFile> item, CoreViewModel coreViewModel) : base(coreViewModel) {
         this.Terrains = new(terrains);
         this.model = content;
-        this.item = item;
+        this.Item = item;
 
 
         XamlUICommand addNew = new();
         addNew.ExecuteRequested += (sender, e) => {
-            this.terrains.Add(new(coreViewModel) { Color = Color.FromArgb(255, 255, 255, 255) });
+            this.terrains.Add(new(coreViewModel, Guid.NewGuid(), item.Path) { Color = Color.FromArgb(255, 255, 255, 255) });
         };
         this.AddCommand = addNew;
 
@@ -56,10 +57,21 @@ internal sealed partial class TerrainsViewModel : ViewModel<TerrainsFile, Terrai
     }
 
     public override Task RestoreValuesFromModel() {
-        // TODO: only handel changes....
-        terrains.Clear();
-        foreach (var terrain in model.Terrains) {
-            TerranViewModel terrainViewModel = new(this.CoreViewModel) {
+
+        var vmTarreans = terrains.Select(ToModelTerrain);
+
+        var newTerrains = model.Terrains.Except(vmTarreans, Terrain.IdEqualityComparer);
+        var removeTerrains = vmTarreans.Except(model.Terrains, Terrain.IdEqualityComparer);
+        var revertChanges = model.Terrains.Intersect(vmTarreans, Terrain.IdEqualityComparer);
+
+        foreach (var terrain in removeTerrains) {
+            var toRemove = terrains.FirstOrDefault(x => ToModelTerrain(x) == terrain);
+            if (toRemove != null) {
+                terrains.Remove(toRemove);
+            }
+        }
+        foreach (var terrain in newTerrains) {
+            TerranViewModel terrainViewModel = new(this.CoreViewModel, terrain.FileLoadGuid, Item.Path) {
                 Color = terrain.Color,
                 FillTransparency = terrain.Opacity / 100.0,
                 Name = terrain.Name,
@@ -70,10 +82,42 @@ internal sealed partial class TerrainsViewModel : ViewModel<TerrainsFile, Terrai
                 terrainViewModel.ImageSelectorViewModel.X = terrain.Image.x;
                 terrainViewModel.ImageSelectorViewModel.Y = terrain.Image.y;
             }
-            this.terrains.Add(terrainViewModel);
+            var index = Array.IndexOf(model.Terrains, terrain);
+            this.terrains.Insert(index, terrainViewModel);
         }
+        foreach (var toRevert in revertChanges) {
+            var terrainViewModel = terrains.First(x => x.Id == toRevert.FileLoadGuid);
+            terrainViewModel.Color = toRevert.Color;
+            terrainViewModel.FillTransparency = toRevert.Opacity / 100.0;
+            terrainViewModel.Name = toRevert.Name;
+            terrainViewModel.Type = toRevert.Type;
+            ;
+
+            if (toRevert.Image is not null) {
+                terrainViewModel.ImageSelectorViewModel.SelectedTileSet = toRevert.Image.TileSetPath;
+                terrainViewModel.ImageSelectorViewModel.X = toRevert.Image.x;
+                terrainViewModel.ImageSelectorViewModel.Y = toRevert.Image.y;
+            } else {
+                terrainViewModel.ImageSelectorViewModel.SelectedTileSet = null;
+                terrainViewModel.ImageSelectorViewModel.X = 0;
+                terrainViewModel.ImageSelectorViewModel.Y = 0;
+            }
+        }
+
+        UpdateIndexForTerrains();
+
+        //// TODO: only handel changes....
+        //terrains.Clear();
+        //foreach (var terrain in model.Terrains) {
+        //}
         CheckHasChanges();
         return Task.CompletedTask;
+    }
+
+    private void UpdateIndexForTerrains() {
+        for (int i = 0; i < this.terrains.Count; i++) {
+            terrains[i].Index = i;
+        }
     }
 
     private void TerrainItemChanged(object? sender, PropertyChangedEventArgs e) {
@@ -82,12 +126,19 @@ internal sealed partial class TerrainsViewModel : ViewModel<TerrainsFile, Terrai
 
     private void CheckHasChanges() {
         HasChanges = model.Terrains.Length != this.Terrains.Count
-            || !this.Terrains.Select(x => new Terrain(x.Name, x.Type, x.Color, (int)(x.FillTransparency * 100), x.ImageSelectorViewModel.SelectedTileSet is not null ? new TileImage(x.ImageSelectorViewModel.SelectedTileSet, x.ImageSelectorViewModel.X, x.ImageSelectorViewModel.Y) : null)).SequenceEqual(model.Terrains);
+            || !this.Terrains.Select(ToModelTerrain).SequenceEqual(model.Terrains)
+            || this.terrains.Select((x, i) => (x, i)).Any((x) => x.x.Index != x.i);
         ;
     }
+
+    private static Terrain ToModelTerrain(TerranViewModel x) {
+        return new Terrain(x.Name, x.Type, x.Color, (int)(x.FillTransparency * 100), x.ImageSelectorViewModel.SelectedTileSet is not null ? new TileImage(x.ImageSelectorViewModel.SelectedTileSet, x.ImageSelectorViewModel.X, x.ImageSelectorViewModel.Y) : null) { FileLoadGuid = x.Id };
+    }
+
     protected override async Task SaveValuesToModel() {
-        this.model.Terrains = this.Terrains.Select(x => new Terrain(x.Name, x.Type, x.Color, (int)(x.FillTransparency * 100), x.ImageSelectorViewModel.SelectedTileSet is not null ? new TileImage(x.ImageSelectorViewModel.SelectedTileSet, x.ImageSelectorViewModel.X, x.ImageSelectorViewModel.Y) : null)).ToArray();
-        await this.model.Save(this.item.Path, this.CoreViewModel);
+        this.model.Terrains = this.Terrains.Select(ToModelTerrain).ToArray();
+        await this.model.Save(this.Item.Path, this.CoreViewModel);
+        UpdateIndexForTerrains();
         CheckHasChanges();
     }
 
