@@ -24,13 +24,11 @@ public partial class TileImageSelectorViewModel : IAsyncDisposable {
 
 
 
-    public ReadOnlyObservableCollection<ProjectPath> TileSets { get; }
 
-    private readonly CoreViewModel core;
+    public CoreViewModel Core { get; }
 
     public TileImageSelectorViewModel(CoreViewModel core) {
-        TileSets = core.GetProjectItemCollectionOfType<TileSetFile>();
-        this.core = core;
+        this.Core = core;
     }
 
     private async void OnSelectedTileSetChanged() {
@@ -38,8 +36,8 @@ public partial class TileImageSelectorViewModel : IAsyncDisposable {
             await this.tileSetDisposable.DisposeAsync();
         }
         this.SelectedViewModel = null;
-        if (selectedTileSet is not null && core.GetProjectItem<TileSetFile>(selectedTileSet.Value) is ProjectItem<TileSetFile> item) {
-            this.tileSetDisposable = App.GetViewModel(item, core, true).Of<TileSetViewModel>(out var vmTask);
+        if (selectedTileSet is not null && Core.GetProjectItem<TileSetFile>(selectedTileSet.Value) is ProjectItem<TileSetFile> item) {
+            this.tileSetDisposable = App.GetViewModel(item, Core, true).Of<TileSetViewModel>(out var vmTask);
             this.SelectedViewModel = await vmTask;
         }
     }

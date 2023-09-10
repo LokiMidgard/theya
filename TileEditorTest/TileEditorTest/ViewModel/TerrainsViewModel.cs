@@ -42,9 +42,11 @@ internal sealed partial class TerrainsViewModel : ViewModel<TerrainsFile, Terrai
         this.terrains.CollectionChanged += async (sender, e) => {
             foreach (var item1 in e.NewItems?.OfType<TerranViewModel>() ?? Enumerable.Empty<TerranViewModel>()) {
                 item1.PropertyChanged += TerrainItemChanged;
+                item1.ImageSelectorViewModel.PropertyChanged += TerrainItemChanged;
             }
             foreach (var item1 in e.OldItems?.OfType<TerranViewModel>() ?? Enumerable.Empty<TerranViewModel>()) {
                 item1.PropertyChanged -= TerrainItemChanged;
+                item1.ImageSelectorViewModel.PropertyChanged -= TerrainItemChanged;
                 await item1.DisposeAsync();
             }
 
@@ -57,12 +59,18 @@ internal sealed partial class TerrainsViewModel : ViewModel<TerrainsFile, Terrai
         // TODO: only handel changes....
         terrains.Clear();
         foreach (var terrain in model.Terrains) {
-            this.terrains.Add(new(this.CoreViewModel) {
+            TerranViewModel terrainViewModel = new(this.CoreViewModel) {
                 Color = terrain.Color,
-                FillTransparency = terrain.Opacity,
+                FillTransparency = terrain.Opacity / 100.0,
                 Name = terrain.Name,
                 Type = terrain.Type
-            });
+            };
+            if (terrain.Image is not null) {
+                terrainViewModel.ImageSelectorViewModel.SelectedTileSet = terrain.Image.TileSetPath;
+                terrainViewModel.ImageSelectorViewModel.X = terrain.Image.x;
+                terrainViewModel.ImageSelectorViewModel.Y = terrain.Image.y;
+            }
+            this.terrains.Add(terrainViewModel);
         }
         CheckHasChanges();
         return Task.CompletedTask;
@@ -74,11 +82,11 @@ internal sealed partial class TerrainsViewModel : ViewModel<TerrainsFile, Terrai
 
     private void CheckHasChanges() {
         HasChanges = model.Terrains.Length != this.Terrains.Count
-            || !this.Terrains.Select(x => new Terrain(x.Name, x.Type, x.Color, x.FillTransparency, null)).SequenceEqual(model.Terrains);
+            || !this.Terrains.Select(x => new Terrain(x.Name, x.Type, x.Color, (int)(x.FillTransparency * 100), x.ImageSelectorViewModel.SelectedTileSet is not null ? new TileImage(x.ImageSelectorViewModel.SelectedTileSet, x.ImageSelectorViewModel.X, x.ImageSelectorViewModel.Y) : null)).SequenceEqual(model.Terrains);
         ;
     }
     protected override async Task SaveValuesToModel() {
-        this.model.Terrains = this.Terrains.Select(x => new Terrain(x.Name, x.Type, x.Color, x.FillTransparency, null)).ToArray();
+        this.model.Terrains = this.Terrains.Select(x => new Terrain(x.Name, x.Type, x.Color, (int)(x.FillTransparency * 100), x.ImageSelectorViewModel.SelectedTileSet is not null ? new TileImage(x.ImageSelectorViewModel.SelectedTileSet, x.ImageSelectorViewModel.X, x.ImageSelectorViewModel.Y) : null)).ToArray();
         await this.model.Save(this.item.Path, this.CoreViewModel);
         CheckHasChanges();
     }

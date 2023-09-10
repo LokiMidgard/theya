@@ -12,10 +12,13 @@ using PropertyChanged.SourceGenerator;
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 
+using TileEditorTest.Model;
+using TileEditorTest.ViewModel;
 using TileEditorTest.ViewModel.Controls;
 
 using Windows.Foundation;
@@ -29,16 +32,23 @@ public sealed partial class TileImageSelector : UserControl {
     [Notify]
     private TileImageSelectorViewModel? viewModel;
 
-    
+    [Notify]
+    private ReadOnlyObservableCollection<ProjectPath>? allTileSetItemPaths;
+
+
+
+    private void OnViewModelChanged() {
+        allTileSetItemPaths = viewModel?.Core.GetProjectItemCollectionOfType<TileSetFile>();
+    }
+
+
     private double ConvertHeight(int y, int width) {
         return y * width;
     }
-  
+
 
     public TileImageSelector() {
         this.InitializeComponent();
-        //mouseOverRect = new Rectangle();
-
     }
 
     private void Grid_PointerEntered(object sender, PointerRoutedEventArgs e) {

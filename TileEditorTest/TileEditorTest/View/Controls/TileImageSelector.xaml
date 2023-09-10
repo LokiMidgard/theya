@@ -11,7 +11,8 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <ComboBox ItemsSource="{x:Bind ViewModel.TileSets, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedTileSet, Mode=TwoWay}" ></ComboBox>
+        <ComboBox SelectedItem="{x:Bind ViewModel.SelectedTileSet, Mode=TwoWay}" 
+                  ItemsSource="{x:Bind AllTileSetItemPaths, Mode=OneWay}" />
         <ScrollViewer Grid.Row="1" IsVerticalRailEnabled="True" IsVerticalScrollChainingEnabled="True" VerticalScrollMode="Auto" 
                       IsHorizontalRailEnabled="True" HorizontalScrollBarVisibility="Auto"
                       >

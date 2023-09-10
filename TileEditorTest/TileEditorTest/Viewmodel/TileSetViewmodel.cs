@@ -242,33 +242,43 @@ public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>
     private ProjectItem<ImageFile>? selectedImage;
 
     private async void OnSelectedImageChanged() {
+        await LoadTileModels();
+    }
+    private async void OnTileWidthChanged() {
+        await LoadTileModels();
+    }
+    private async void OnTileHeightChanged() {
+        await LoadTileModels();
+    }
 
-        // unregister old tileModels
+    private async Task LoadTileModels() {
+        ClearTileModels();
+        if (SelectedImage is null) {
+            return;
+        }
+        BitmapImage image = new() {
+            UriSource = new Uri(SelectedImage.Path.SystemPath(CoreViewModel)),
+        };
+        this.ImageSource = image;
+        var content = await SelectedImage.Content;
+        //TODO: Refresh on tilesize change
+        Columns = (int)content.Width / (TileWidth == 0 ? (int)content.Width : tileWidth);
+        Rows = (int)content.Height / (TileHeight == 0 ? (int)content.Height : TileHeight);
+        var tileModel = new TileViewModel[Rows * Columns];
+        for (global::System.Int32 i = 0; i < tileModel.Length; i++) {
+            tileModel[i] = new(i % columns, i / columns);
+            tileModel[i].PropertyChanged += TileModelChanged;
+        }
+
+        TileModel = tileModel;
+    }
+
+    private void ClearTileModels() {
         foreach (var item in tileModel) {
             item.PropertyChanged -= TileModelChanged;
         }
-
-        if (SelectedImage is null) {
-            this.ImageSource = null;
-            TileModel = Array.Empty<TileViewModel>();
-
-        } else {
-            BitmapImage image = new() {
-                UriSource = new Uri(SelectedImage.Path.SystemPath(CoreViewModel)),
-            };
-            this.ImageSource = image;
-            var content = await SelectedImage.Content;
-            //TODO: Refresh on tilesize change
-            Columns = (int)content.Width / TileWidth;
-            Rows = (int)content.Height / TileHeight;
-            var tileModel = new TileViewModel[Rows * Columns];
-            for (global::System.Int32 i = 0; i < tileModel.Length; i++) {
-                tileModel[i] = new(i % columns, i / columns);
-                tileModel[i].PropertyChanged += TileModelChanged;
-            }
-
-            TileModel = tileModel;
-        }
+        this.ImageSource = null;
+        TileModel = Array.Empty<TileViewModel>();
     }
 
     private void TileModelChanged(object? sender, PropertyChangedEventArgs e) {

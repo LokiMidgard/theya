@@ -6,7 +6,7 @@ using Windows.Storage;
 
 namespace TileEditorTest.ViewModel;
 
-public readonly struct ProjectPath {
+public readonly struct ProjectPath : IEquatable<ProjectPath> {
     public readonly string Value;
     public ProjectPath(string path) => Value = path ?? throw new ArgumentNullException(nameof(path));
     public override string ToString() => Value;
@@ -16,6 +16,14 @@ public readonly struct ProjectPath {
 
     public static implicit operator ProjectPath(string path) => new(path);
     public static implicit operator string(ProjectPath path) => path.Value;
+
+    public static bool operator ==(ProjectPath left, ProjectPath right) {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(ProjectPath left, ProjectPath right) {
+        return !(left == right);
+    }
 
     public FileInfo ToFileinfo(CoreViewModel project) {
         return new FileInfo(Path.Combine(project.RootFolder.Path, this.Value));
@@ -84,5 +92,17 @@ public readonly struct ProjectPath {
 
     internal string SystemPath(CoreViewModel project) {
         return Path.Combine(project.RootFolder.Path, this.Value);
+    }
+
+    public override bool Equals(object? obj) {
+        return obj is ProjectPath path && Equals(path);
+    }
+
+    public bool Equals(ProjectPath other) {
+        return Value == other.Value;
+    }
+
+    public override int GetHashCode() {
+        return HashCode.Combine(Value);
     }
 }

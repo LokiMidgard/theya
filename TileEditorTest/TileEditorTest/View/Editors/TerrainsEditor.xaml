@@ -35,21 +35,10 @@
             <DataTemplate x:DataType="viewmodel:TerranViewModel">
                 <ScrollViewer>
 
-                    <StackPanel>
-                        <TextBlock Text="Name" />
-                        <TextBox Text="{x:Bind Name,Mode=TwoWay}"/>
-                        <TextBlock Text="Editor Display Color" />
-                        <ColorPicker 
-                        ColorSpectrumShape="Box"
-                        IsMoreButtonVisible="True"
-                        IsColorSliderVisible="True"
-                        IsColorChannelTextInputVisible="True"
-                        IsHexInputVisible="True"
-                        IsAlphaEnabled="False"
-                        Color="{x:Bind Color, Mode=TwoWay}" />
-                        <TextBlock Text="Editor Fill Opacity"/>
-                        <Slider Value="{x:Bind FillTransparency, Mode=TwoWay}" Maximum="1" SmallChange="0.01" LargeChange="0.1" />
-                        <Button Tapped="Button_Tapped">
+                    <StackPanel HorizontalAlignment="Left">
+                        <TextBlock Text="Name" Margin="8,8,8,4" />
+                        <TextBox Text="{x:Bind Name,Mode=TwoWay}" Margin="8,0,8,8"/>
+                        <Button Tapped="Button_Tapped" Margin="8">
                             <StackPanel Orientation="Horizontal">
                                 <Border Width="24" Height="24" Margin="0,0,8,0" BorderThickness="1" BorderBrush="{ThemeResource AppBarItemForegroundThemeBrush}" >
                                     <controls1:TileImage ViewModel="{x:Bind ImageSelectorViewModel,Mode=OneWay}"/>
@@ -57,6 +46,29 @@
                                 <TextBlock Text="Select Tile" />
                             </StackPanel>
                         </Button>
+                        <TextBlock Text="Editor Fill Opacity"  Margin="8,8,8,4"/>
+                        <Slider 
+                            Value="{x:Bind FillTransparency, Mode=TwoWay}" 
+                            Maximum="1" 
+                            SnapsTo="Ticks"
+                            TickFrequency="0.05"
+                            TickPlacement="Inline"
+                            ThumbToolTipValueConverter="{StaticResource PercentageConverter}"
+                            SmallChange="0.01" 
+                            LargeChange="0.1" 
+                            Margin="8,-6,8,0"/>
+                        <TextBlock Text="Editor Display Color" Margin="8,8,8,4" />
+                        <ColorPicker HorizontalAlignment="Left"
+                                     Margin="8,0,8,8"
+                        ColorSpectrumShape="Box"
+                        IsMoreButtonVisible="True"
+                        IsColorSliderVisible="True"
+                        IsColorChannelTextInputVisible="True"
+                        IsHexInputVisible="True"
+                        IsAlphaEnabled="False"
+                        Color="{x:Bind Color, Mode=TwoWay}" />
+                        
+
                         <ContentDialog CloseButtonText="Close">
                             <controls1:TileImageSelector ViewModel="{x:Bind ImageSelectorViewModel,Mode=OneWay}"/>
                         </ContentDialog>
