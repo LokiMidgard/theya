@@ -38,7 +38,7 @@ public sealed partial class TileImageSelector : UserControl {
 
 
     private void OnViewModelChanged() {
-        allTileSetItemPaths = viewModel?.Core.GetProjectItemCollectionOfType<TileSetFile>();
+        allTileSetItemPaths = viewModel?.Core.GetProjectPathCollectionOfType<TileSetFile>();
     }
 
 

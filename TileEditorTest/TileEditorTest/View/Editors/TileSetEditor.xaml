@@ -8,9 +8,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:model="using:TileEditorTest.Model"
     mc:Ignorable="d"
-     xmlns:developerTools="using:Community."
-   
-    >
+     xmlns:developerTools="using:Community." xmlns:collections="using:CommunityToolkit.Common.Collections" xmlns:helper="using:TileEditorTest.Helper" xmlns:viewmodel="using:TileEditorTest.ViewModel">
 
 
 
@@ -35,7 +33,40 @@
             </ComboBox.ItemTemplate>
         </ComboBox>
 
+        <ScrollViewer Grid.Row="3" >
+            <TreeView ItemsSource="{x:Bind Terrains, Mode=OneWay}" x:Name="terrainsSelection">
+                <TreeView.ItemTemplateSelector>
+                    <helper:TreeDataTemplateSelector >
+                        <helper:TemplateSelector  Type="collections:IReadOnlyObservableGroup">
+                            <DataTemplate x:DataType="collections:IReadOnlyObservableGroup">
+                                <TreeViewItem ItemsSource="{x:Bind Mode=OneWay}">
+                                    <TextBlock Text="{x:Bind Key.ToString(), Mode=OneWay}" />
+                                </TreeViewItem>
+                            </DataTemplate>
+                        </helper:TemplateSelector>
+                        <helper:TemplateSelector  Type="viewmodel:TerranViewModel">
+                            <DataTemplate x:DataType="viewmodel:TerranViewModel">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="24" Height="24" Margin="0,0,8,0" BorderThickness="1" BorderBrush="{ThemeResource AppBarItemForegroundThemeBrush}" >
+                                        <controls:TileImage ViewModel="{x:Bind ImageSelectorViewModel,Mode=OneWay}"/>
+                                    </Border>
+                                    <StackPanel>
+                                        <TextBlock Text="{x:Bind Name, Mode=OneWay}" ></TextBlock>
+                                        <Rectangle Height="4" HorizontalAlignment="Stretch" >
+                                            <Rectangle.Fill>
+                                                <SolidColorBrush Color="{x:Bind Color, Mode=OneWay}"/>
+                                            </Rectangle.Fill>
+                                        </Rectangle>
+                                    </StackPanel>
+                                </StackPanel>
 
+                            </DataTemplate>
+                        </helper:TemplateSelector>
+                    </helper:TreeDataTemplateSelector>
+                </TreeView.ItemTemplateSelector>
+
+            </TreeView>
+        </ScrollViewer>
 
         <Grid Grid.Row="2" Margin="0,8,0,0">
 
@@ -72,8 +103,8 @@
                 <Grid HorizontalAlignment="Left" VerticalAlignment="Top">
 
 
-                    <controls:NineGridPoints ViewModel="{x:Bind ViewModel}" ></controls:NineGridPoints>
-                    
+                    <controls:NineGridPoints x:Name="grid" ViewModel="{x:Bind ViewModel}" SelectedColor="{x:Bind ConvertTerrainViewModel(terrainsSelection.SelectedItem), Mode=OneWay}" ></controls:NineGridPoints>
+
 
 
 

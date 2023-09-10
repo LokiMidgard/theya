@@ -20,7 +20,7 @@ public partial class ProjectTreeElementViewModel {
     [Notify(global::PropertyChanged.SourceGenerator.Setter.Private)]
     private ProjectTreeElementViewModel? parent;
 
-    private readonly MultiThreadObservableCollection<ProjectTreeElementViewModel> children = new();
+    private readonly ObservableCollection<ProjectTreeElementViewModel> children = new();
     public ReadOnlyObservableCollection<ProjectTreeElementViewModel> Children { get; }
 
     public ProjectItemType Type { get; }

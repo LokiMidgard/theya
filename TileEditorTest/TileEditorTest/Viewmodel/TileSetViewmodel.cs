@@ -341,7 +341,7 @@ public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>
 
     public static async Task<TileSetViewModel> Create(ProjectItem<TileSetFile> projectItem, CoreViewModel project) {
         var tileSet = await projectItem.Content;
-        var files = project.GetProjectItemCollectionOfType<ImageFile>();
+        var files = project.GetProjectPathCollectionOfType<ImageFile>();
         ObservableCollection<ProjectItem<ImageFile>> allImages = new();
         foreach (var file in files) {
             var imageItems = project.GetProjectItem<ImageFile>(file);

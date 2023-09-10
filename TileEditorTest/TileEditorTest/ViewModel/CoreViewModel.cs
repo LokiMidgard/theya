@@ -30,7 +30,7 @@ public partial class CoreViewModel {
     public ProjectTreeElementViewModel Root { get; private set; }
     public IEnumerable<ProjectTreeElementViewModel> RootItemsSource => Enumerable.Repeat(Root, 1);
 
-    private ImmutableDictionary<ProjectItemType, ObservableCollection<ProjectPath>> pathByType;
+    private ImmutableDictionary<Type, ObservableCollection<ProjectPath>> pathByType;
 
     private static readonly List<(Regex pattern, Func<ProjectPath, CoreViewModel, Task<IProjectItemContent>> loders)> loaders = new();
 
@@ -50,12 +50,15 @@ public partial class CoreViewModel {
         InitProjectItemContentLoader();
     }
     private CoreViewModel(Func<CoreViewModel, Task<ProjectTreeElementViewModel>> root, ProjectStruct projectData, StorageFolder rootFolder, TaskCompletionSource waitForLoadReady) {
-        this.pathByType = ProjectItemTypeEnumExtensions.GetValuesFast().ToImmutableDictionary(x => x, x => new ObservableCollection<ProjectPath>());
+        this.pathByType = GetProjectFileTypes().Select(x => (types: x, collection: new ObservableCollection<ProjectPath>())).SelectMany(x => x.types.Select(y => (type: y, x.collection))).ToImmutableDictionary(x => x.type, x => x.collection);
         this.Name = projectData.Name ?? "Unbenannt";
         this.RootFolder = rootFolder;
         Root = null!;// This will be set before the create method returns
         root(this).ContinueWith(t => Root = t.Result).ContinueWith(x => waitForLoadReady.SetResult());
     }
+
+    [AutoInvoke.FindAndInvoke]
+    private Type[] GetProjectFileTypes<T>() where T : class, IProjectItemContent<T> => new[] { typeof(T), typeof(ProjectItem<T>) };
 
 
     [AutoInvoke.FindAndInvoke]
@@ -117,9 +120,13 @@ public partial class CoreViewModel {
         return projectViewModel;
     }
 
-    public ReadOnlyObservableCollection<ProjectPath> GetProjectItemCollectionOfType<T>()
+    public ReadOnlyObservableCollection<ProjectItem<T>> GetProjectItemCollectionOfType<T>()
         where T : class, IProjectItemContent<T> {
-        return new(this.pathByType[T.Type]);
+        return this.pathByType[typeof(T)].SelectObservable(x => GetProjectItem<T>(x) ?? throw new InvalidOperationException($"Did not find Projektitem to path {x}"));
+    }
+    public ReadOnlyObservableCollection<ProjectPath> GetProjectPathCollectionOfType<T>()
+        where T : class, IProjectItemContent<T> {
+        return new(this.pathByType[typeof(T)]);
     }
 
     internal ProjectItem<T>? GetProjectItem<T>(ProjectPath path) where T : class, IProjectItemContent<T> {
@@ -146,12 +153,12 @@ public partial class CoreViewModel {
 
     internal void RegisterTreeElement(ProjectTreeElementViewModel projectTreeElementViewModel) {
         if (projectTreeElementViewModel.Content is ProjectItem item) {
-            this.pathByType[item.Type].Add(item.Path);
+            this.pathByType[item.GetType()].Add(item.Path);
         }
     }
     internal void UnRegisterTreeElement(ProjectTreeElementViewModel projectTreeElementViewModel) {
         if (projectTreeElementViewModel.Content is ProjectItem item) {
-            this.pathByType[item.Type].Remove(item.Path);
+            this.pathByType[item.GetType()].Remove(item.Path);
         }
     }
 }

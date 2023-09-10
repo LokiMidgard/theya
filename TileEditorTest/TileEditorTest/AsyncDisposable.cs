@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 
 namespace TileEditorTest;
-internal class AsyncDisposable : IAsyncDisposable {
+internal sealed class AsyncDisposable : IAsyncDisposable {
     private readonly Func<Task> value;
     private readonly bool disposed;
 
@@ -15,5 +15,21 @@ internal class AsyncDisposable : IAsyncDisposable {
             return;
         }
         await value();
+    }
+}
+
+internal sealed class Disposable : IDisposable {
+    private readonly Action value;
+    private readonly bool disposed;
+
+    public Disposable(Action value) {
+        this.value = value;
+    }
+
+    public void Dispose() {
+        if (disposed) {
+            return;
+        }
+        value();
     }
 }

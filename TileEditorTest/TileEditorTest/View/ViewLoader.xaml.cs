@@ -164,6 +164,11 @@ public sealed partial class ViewLoader : TabViewItem, IDisposable {
         if (viewModelDisposable is not null) {
             await this.viewModelDisposable.DisposeAsync();
         }
+        if (Control is IAsyncDisposable asyncDisposable) {
+            await asyncDisposable.DisposeAsync();
+        } else if (Control is IDisposable disposable) {
+            disposable.Dispose();
+        }
         this.ContentViewModel = null;
         this.Control = null;
     }
