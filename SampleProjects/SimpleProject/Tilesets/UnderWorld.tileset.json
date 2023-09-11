@@ -6,96 +6,41 @@
   },
   "Columns": 32,
   "TileData": [
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
     {
       "Terrain": {
-        "TopLeft": {
-          "Terrain": "Tilesets/ground.terrains.json"
-        },
-        "Right": {
-          "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
-        },
         "BottomRight": {
-          "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
-        }
-      }
-    },
-    {
-      "Terrain": {
-        "BottomLeft": {
-          "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
-        },
-        "Bottom": {
-          "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
-        },
-        "BottomRight": {
-          "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
-        }
-      }
-    },
-    {
-      "Terrain": {
-        "BottomLeft": {
-          "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
-        }
-      }
-    },
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {
-      "Terrain": {
-        "TopRight": {
-          "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
-        },
-        "Right": {
-          "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
-        },
-        "BottomRight": {
-          "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
-        }
-      }
-    },
-    {
-      "Terrain": {
-        "Left": {
-          "Terrain": "Tilesets/ground.terrains.json"
-        },
-        "Right": {
           "Terrain": "Tilesets/ground.terrains.json"
         }
       }
@@ -104,79 +49,75 @@
       "Terrain": {
         "TopLeft": {
           "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
-        },
-        "Left": {
-          "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
-        },
-        "BottomLeft": {
-          "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
-        }
-      }
-    },
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {
-      "Terrain": {
-        "TopRight": {
-          "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
-        }
-      }
-    },
-    {
-      "Terrain": {
-        "TopLeft": {
-          "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
+          "Type": 1
         },
         "Top": {
           "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
+          "Type": 1
         },
-        "TopRight": {
+        "Left": {
           "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
+          "Type": 1
+        },
+        "Center": {
+          "Terrain": "Tilesets/ground.terrains.json"
+        },
+        "Right": {
+          "Terrain": "Tilesets/ground.terrains.json",
+          "Type": 1
+        },
+        "BottomLeft": {
+          "Terrain": "Tilesets/ground.terrains.json"
+        },
+        "Bottom": {
+          "Terrain": "Tilesets/ground.terrains.json"
         }
       }
     },
     {
       "Terrain": {
-        "TopLeft": {
+        "Left": {
           "Terrain": "Tilesets/ground.terrains.json",
-          "Index": 1
+          "Type": 1
+        },
+        "BottomLeft": {
+          "Terrain": "Tilesets/ground.terrains.json",
+          "Type": 1
         }
       }
     },
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
     {},
     {},
     {},

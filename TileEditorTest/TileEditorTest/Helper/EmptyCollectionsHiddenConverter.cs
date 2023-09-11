@@ -1,6 +1,8 @@
 ﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 
+using PropertyChanged.SourceGenerator;
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -28,6 +30,16 @@ internal class EmptyCollectionsHiddenConverter : IValueConverter {
             : DependencyProperty.UnsetValue;
     }
 
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language) {
+        throw new NotImplementedException();
+    }
+}
+
+public class ThisConverter : IValueConverter {
+    public object Convert(object value, Type targetType, object parameter, string language) {
+        return value;
+    }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language) {
         throw new NotImplementedException();

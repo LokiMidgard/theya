@@ -34,45 +34,7 @@ namespace TileEditorTest.View.Controls;
 public sealed partial class NineGridPoints : UserControl {
 
     [Notify]
-    private TerranViewModel? selectedColor;
-
-    //[Notify]
-    //private Color? point1;
-    //[Notify]
-    //private Color? point2 = Color.FromArgb(255, 0, 0, 255);
-    //[Notify]
-    //private Color? point3;
-    //[Notify]
-    //private Color? point4;
-    //[Notify]
-    //private Color? point5;
-    //[Notify]
-    //private Color? point6;
-    //[Notify]
-    //private Color? point7;
-    //[Notify]
-    //private Color? point8;
-    //[Notify]
-    //private Color? point9;
-
-    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    //private TerrainData? p1;
-    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    //private TerrainData? p2;
-    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    //private TerrainData? p3;
-    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    //private TerrainData? p4;
-    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    //private TerrainData? p5;
-    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    //private TerrainData? p6;
-    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    //private TerrainData? p7;
-    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    //private TerrainData? p8;
-    //[Notify(Getter.Private, global::PropertyChanged.SourceGenerator.Setter.Private)]
-    //private TerrainData? p9;
+    private TerranFormViewModel? selectedColor;
 
     [Notify]
     private TileSetViewModel? viewModel;
@@ -136,7 +98,7 @@ public sealed partial class NineGridPoints : UserControl {
         var transform = new TranslateTransform() { };
         List<TerrainData> paths = new();
         if (viewModel is not null) {
-            TerranViewModel?[,] colorsToHandle = new TerranViewModel[3 * viewModel.Columns, 3 * viewModel.Rows];
+            TerranFormViewModel?[,] colorsToHandle = new TerranFormViewModel[3 * viewModel.Columns, 3 * viewModel.Rows];
 
             for (int tileX = 0; tileX < viewModel.Columns; tileX++) {
                 for (int tileY = 0; tileY < viewModel.Rows; tileY++) {
@@ -177,7 +139,7 @@ public sealed partial class NineGridPoints : UserControl {
         this.Paths = paths.ToArray();
     }
 
-    private string CalculatePath(Transform transform, TerranViewModel?[,] colorsToHandle, (int x, int y) start, TerranViewModel currentColor, Edge4 startEdge, bool negate = false) {
+    private string CalculatePath(Transform transform, TerranFormViewModel?[,] colorsToHandle, (int x, int y) start, TerranFormViewModel currentColor, Edge4 startEdge, bool negate = false) {
 
         if (viewModel is null) {
             return "";
@@ -492,7 +454,7 @@ public sealed partial class NineGridPoints : UserControl {
             }
 
             if (startPointsForCut.Count > 0) {
-                var copyColorToHandle = new TerranViewModel?[colorsToHandle.GetLength(0), colorsToHandle.GetLength(1)];
+                var copyColorToHandle = new TerranFormViewModel?[colorsToHandle.GetLength(0), colorsToHandle.GetLength(1)];
                 Array.Copy(colorsToHandle, copyColorToHandle, colorsToHandle.Length);
                 while (!negate && startPointsForCut.Count > 0) {
 
@@ -590,9 +552,9 @@ public sealed partial class NineGridPoints : UserControl {
         //this.MousePaths = CalculatePathes(tempModel, new TranslateTransform() { X = tileX * viewModel.TileWidth, Y = tileY * viewModel.TileHeight });
 
         var transform = new TranslateTransform() { X = tileX * viewModel.TileWidth, Y = tileY * viewModel.TileHeight };
-        TerranViewModel mouseOverTerrain = new(this.viewModel.CoreViewModel, Guid.NewGuid(), viewModel.ProjectItem.Path) { Color = Color.FromArgb(255, 0, 255, 255) };
+        TerranFormViewModel mouseOverTerrain = new(TerranType.Cut, new(viewModel.CoreViewModel, Guid.NewGuid(), viewModel.ProjectItem.Path) { Color = Color.FromArgb(255, 0, 255, 255) });
 
-        var grid = new TerranViewModel[3, 3];
+        var grid = new TerranFormViewModel[3, 3];
         grid[subX, subY] = mouseOverTerrain;
 
         string path = CalculatePath(transform, grid, (subX, subY), mouseOverTerrain, Edge4.Left);
@@ -635,7 +597,7 @@ public sealed partial class NineGridPoints : UserControl {
     }
 }
 
-internal record TerrainData(TerranViewModel Model, string Path);
+internal record TerrainData(TerranFormViewModel Model, string Path);
 
 file enum CommandType {
     Absolute,

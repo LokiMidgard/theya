@@ -87,23 +87,23 @@ where View : Control, IView<OfFile, VM, View> {
 public partial class TileViewModel {
 
     [Notify]
-    private TerranViewModel? leftTop;
+    private TerranFormViewModel? leftTop;
     [Notify]
-    private TerranViewModel? top;
+    private TerranFormViewModel? top;
     [Notify]
-    private TerranViewModel? rightTop;
+    private TerranFormViewModel? rightTop;
     [Notify]
-    private TerranViewModel? left;
+    private TerranFormViewModel? left;
     [Notify]
-    private TerranViewModel? center;
+    private TerranFormViewModel? center;
     [Notify]
-    private TerranViewModel? right;
+    private TerranFormViewModel? right;
     [Notify]
-    private TerranViewModel? leftBottom;
+    private TerranFormViewModel? leftBottom;
     [Notify]
-    private TerranViewModel? bottom;
+    private TerranFormViewModel? bottom;
     [Notify]
-    private TerranViewModel? rightBottom;
+    private TerranFormViewModel? rightBottom;
 
     private GridSelection grid;
     public ref GridSelection Grid => ref grid;
@@ -135,13 +135,13 @@ public partial class TileViewModel {
         public GridSelection(TileViewModel tile) {
             this.tile = tile ?? throw new ArgumentNullException(nameof(tile));
         }
-        public readonly TerranViewModel? this[int x, int y] {
+        public readonly TerranFormViewModel? this[int x, int y] {
             get => tile.Points[x + y * 3];
             set => tile.Points[x + y * 3] = value;
         }
     }
 
-    public ObservableCollection<TerranViewModel?> Points { get; }
+    public ObservableCollection<TerranFormViewModel?> Points { get; }
     public int X { get; }
     public int Y { get; }
 
@@ -187,19 +187,26 @@ public enum TerranType {
 }
 public sealed partial class TerranViewModel : IAsyncDisposable {
     [Notify]
-    private Color color;
-    [Notify]
-    private double fillTransparency = 0.5;
-    [Notify(global::PropertyChanged.SourceGenerator.Setter.Private)]
-    private Color stroke;
-    [Notify(global::PropertyChanged.SourceGenerator.Setter.Private)]
-    private Color fill;
-    [Notify]
     private string name = "";
     [Notify]
-    private TerranType type;
+    private Color color = Color.FromArgb(255, 255, 255, 255);
+
+    private readonly TerranFormViewModel floor;
+    private readonly TerranFormViewModel wall;
+    private readonly TerranFormViewModel cut;
+    public TerranFormViewModel? Floor => HasFloor ? floor : null;
+    public TerranFormViewModel? Wall => HasWall ? wall : null;
+    public TerranFormViewModel? Cut => HasCut ? cut : null;
+
     [Notify]
     private int index;
+
+    [Notify]
+    private bool hasFloor;
+    [Notify]
+    private bool hasWall;
+    [Notify]
+    private bool hasCut;
 
     public ProjectPath TerrainFile { get; }
 
@@ -211,19 +218,52 @@ public sealed partial class TerranViewModel : IAsyncDisposable {
         ImageSelectorViewModel = new(core);
         Id = id;
         TerrainFile = terrainFile;
+        this.floor = new(TerranType.Floor, this);
+        this.wall = new(TerranType.Wall, this);
+        this.cut = new(TerranType.Cut, this);
+
+        this.floor.PropertyChanged += (sender, e) => OnPropertyChanged(new PropertyChangedEventArgs($"{nameof(Floor)}.{e.PropertyName}"));
+        this.wall.PropertyChanged += (sender, e) => OnPropertyChanged(new PropertyChangedEventArgs($"{nameof(Wall)}.{e.PropertyName}"));
+        this.cut.PropertyChanged += (sender, e) => OnPropertyChanged(new PropertyChangedEventArgs($"{nameof(Cut)}.{e.PropertyName}"));
+
+    }
+
+    public ValueTask DisposeAsync() {
+        return ImageSelectorViewModel.DisposeAsync();
+    }
+}
+public sealed partial class TerranFormViewModel {
+    [Notify]
+    private double fillTransparency = 0.5;
+    [Notify(global::PropertyChanged.SourceGenerator.Setter.Private)]
+    private Color stroke;
+    [Notify(global::PropertyChanged.SourceGenerator.Setter.Private)]
+    private Color fill;
+
+    public TerranType Type { get; }
+    public TerranViewModel Parent { get; }
+
+    public TerranFormViewModel(TerranType type, TerranViewModel parent) {
+        Type = type;
+        Parent = parent;
+        parent.PropertyChanged += Parent_PropertyChanged;
+    }
+
+    private void Parent_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
+        if (e.PropertyName == nameof(Parent.Color)) {
+            OnColorChanged();
+        }
     }
 
     private void OnFillTransparencyChanged() {
         OnColorChanged();
     }
     private void OnColorChanged() {
+        var color = Parent.Color;
         this.Stroke = color;
         this.Fill = Color.FromArgb((byte)(255 * fillTransparency), color.R, color.G, color.B);
     }
 
-    public ValueTask DisposeAsync() {
-        return ImageSelectorViewModel.DisposeAsync();
-    }
 }
 
 public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>, IViewModel<TileSetFile, TileSetViewModel>, IAsyncDisposable {
@@ -347,7 +387,7 @@ public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>
             result.PropertyChanged += TileModelChanged;
             return result;
 
-            async Task<TerranViewModel?> GetPointViewModel(Dictionary<ProjectPath, TerrainsViewModel> vmLookup, TerrainId? dataHolder) {
+            async Task<TerranFormViewModel?> GetPointViewModel(Dictionary<ProjectPath, TerrainsViewModel> vmLookup, TerrainId? dataHolder) {
                 if (dataHolder is null) {
                     return null;
                 }
@@ -360,7 +400,12 @@ public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>
                     vm = await vmTask;
                     disposeTerransViewModel.Add(disposable);
                 }
-                var result = vm.Terrains[dataHolder.Index];
+                var result = dataHolder.Type switch {
+                    TerranType.Cut => vm.Terrains[dataHolder.Index].Cut,
+                    TerranType.Wall => vm.Terrains[dataHolder.Index].Wall,
+                    TerranType.Floor => vm.Terrains[dataHolder.Index].Floor,
+                    _ => throw new NotImplementedException($"Type {dataHolder.Type} not implemented.")
+                };
                 return result;
             }
         }));
@@ -388,8 +433,8 @@ public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>
     private static TileData CreateTileModelData(TileViewModel x) {
         TileData tileData = new TileData(new TerrainIdData(GetIdData(x.LeftTop), GetIdData(x.Top), GetIdData(x.RightTop), GetIdData(x.Left), GetIdData(x.Center), GetIdData(x.Right), GetIdData(x.LeftBottom), GetIdData(x.Bottom), GetIdData(x.RightBottom)));
         return tileData;
-        static TerrainId? GetIdData(TerranViewModel? x) {
-            return x is not null ? new(x.TerrainFile, x.Index) : null;
+        static TerrainId? GetIdData(TerranFormViewModel? x) {
+            return x is not null ? new(x.Parent.TerrainFile, x.Parent.Index, x.Type) : null;
         }
     }
 

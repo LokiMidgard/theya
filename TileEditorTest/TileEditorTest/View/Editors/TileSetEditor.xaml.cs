@@ -1,4 +1,6 @@
 ﻿using CommunityToolkit.Common.Collections;
+using CommunityToolkit.WinUI;
+using CommunityToolkit.WinUI.Controls;
 using CommunityToolkit.WinUI.UI.Controls;
 
 using Microsoft.UI.Xaml;
@@ -8,6 +10,8 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+
+using PropertyChanged.SourceGenerator;
 
 using System;
 using System.Collections.Generic;
@@ -41,6 +45,9 @@ public sealed partial class TileSetEditor : UserControl, IView<TileSetFile, Tile
         this.InitializeComponent();
     }
 
+    [Notify]
+    private TerranFormViewModel? selectedColor;
+
     public ReadOnlyObservableGroupe<ProjectPath, TerranViewModel> Terrains { get; }
     internal TileSetViewModel ViewModel { get; }
 
@@ -54,11 +61,35 @@ public sealed partial class TileSetEditor : UserControl, IView<TileSetFile, Tile
         Terrains.Dispose();
     }
 
-    private TerranViewModel? ConvertTerrainViewModel(object obj) {
-        TerranViewModel? terrainViewModel = obj as TerranViewModel ?? grid.SelectedColor;
-        if (terrainViewModel != terrainsSelection.SelectedItem) {
-            terrainsSelection.SelectedItem = terrainViewModel;
+    private void Segmented_Tapped(object sender, TappedRoutedEventArgs e) {
+        var segmented = (Segmented)sender;
+        if (segmented.SelectedIndex == -1) {
+            return;
         }
-        return terrainViewModel;
+        var data = (TerranViewModel)segmented.DataContext;
+        if (data is null) {
+            return;
+        }
+
+        this.FindDescendants().OfType<Segmented>().Where(x => !ReferenceEquals(x, sender)).ForEach(x => x.SelectedIndex = -1);
+
+        var subData = segmented.SelectedIndex switch {
+            0 => data.Floor,
+            1 => data.Wall,
+            2 => data.Cut,
+            _ => throw new NotSupportedException()
+        };
+
+        this.SelectedColor = subData;
     }
+
+
+
+    //private TerranViewModel? ConvertTerrainViewModel(object obj) {
+    //    TerranViewModel? terrainViewModel = obj as TerranViewModel ?? grid.SelectedColor;
+    //    if (terrainViewModel != terrainsSelection.SelectedItem) {
+    //        terrainsSelection.SelectedItem = terrainViewModel;
+    //    }
+    //    return terrainViewModel;
+    //}
 }

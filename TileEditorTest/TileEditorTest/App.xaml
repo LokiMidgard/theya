@@ -24,6 +24,7 @@
             <helper:BoolVisibilityConverter   x:Key="BoolVisibilityConverter" />
             <helper:ReturnParameterOnTrueConverter x:Key="ReturnParameterOnTrueConverter" />
             <helper:PercentageConverter x:Key="PercentageConverter" />
+            <helper:ThisConverter x:Key="ThisConverter" />
 
             <SolidColorBrush x:Key="WindowCaptionBackground">Transparent</SolidColorBrush>
             <!--<SolidColorBrush x:Key="WindowCaptionBackgroundDisabled">LightGreen</SolidColorBrush>-->

@@ -45,4 +45,4 @@ public partial class TileSetFile : JsonProjectItem<TileSetFile>, IProjectItemCon
 public record struct TileSize(int Width, int Height);
 public record struct TileData(TerrainIdData Terrain);
 public record struct TerrainIdData(TerrainId? TopLeft, TerrainId? Top, TerrainId? TopRight, TerrainId? Left, TerrainId? Center, TerrainId? Right, TerrainId? BottomLeft, TerrainId? Bottom, TerrainId? BottomRight);
-public record TerrainId(string Terrain, int Index);
+public record TerrainId(string Terrain, int Index, TerranType Type);

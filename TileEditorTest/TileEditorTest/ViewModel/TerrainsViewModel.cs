@@ -1,4 +1,5 @@
-﻿using Microsoft.UI.Xaml.Input;
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Input;
 
 using PropertyChanged.SourceGenerator;
 
@@ -35,7 +36,7 @@ internal sealed partial class TerrainsViewModel : ViewModel<TerrainsFile, Terrai
 
         XamlUICommand addNew = new();
         addNew.ExecuteRequested += (sender, e) => {
-            this.terrains.Add(new(coreViewModel, Guid.NewGuid(), item.Path) { Color = Color.FromArgb(255, 255, 255, 255) });
+            this.terrains.Add(new(coreViewModel, Guid.NewGuid(), item.Path));
         };
         this.AddCommand = addNew;
 
@@ -55,7 +56,7 @@ internal sealed partial class TerrainsViewModel : ViewModel<TerrainsFile, Terrai
         };
         RestoreValuesFromModel();
     }
-
+    private Dictionary<Guid, TerranViewModel> loadedModels = new();
     public override Task RestoreValuesFromModel() {
 
         var vmTarreans = terrains.Select(ToModelTerrain);
@@ -71,28 +72,38 @@ internal sealed partial class TerrainsViewModel : ViewModel<TerrainsFile, Terrai
             }
         }
         foreach (var terrain in newTerrains) {
-            TerranViewModel terrainViewModel = new(this.CoreViewModel, terrain.FileLoadGuid, Item.Path) {
-                Color = terrain.Color,
-                FillTransparency = terrain.Opacity / 100.0,
-                Name = terrain.Name,
-                Type = terrain.Type
-            };
-            if (terrain.Image is not null) {
-                terrainViewModel.ImageSelectorViewModel.SelectedTileSet = terrain.Image.TileSetPath;
-                terrainViewModel.ImageSelectorViewModel.X = terrain.Image.x;
-                terrainViewModel.ImageSelectorViewModel.Y = terrain.Image.y;
+            if (!loadedModels.TryGetValue(terrain.FileLoadGuid, out var oldModel)) {
+                oldModel = new(this.CoreViewModel, terrain.FileLoadGuid, Item.Path);
+                loadedModels.Add(terrain.FileLoadGuid, oldModel);
             }
-            var index = Array.IndexOf(model.Terrains, terrain);
-            this.terrains.Insert(index, terrainViewModel);
-        }
-        foreach (var toRevert in revertChanges) {
-            var terrainViewModel = terrains.First(x => x.Id == toRevert.FileLoadGuid);
-            terrainViewModel.Color = toRevert.Color;
-            terrainViewModel.FillTransparency = toRevert.Opacity / 100.0;
-            terrainViewModel.Name = toRevert.Name;
-            terrainViewModel.Type = toRevert.Type;
-            ;
 
+            var index = Array.IndexOf(model.Terrains, terrain);
+            this.terrains.Insert(index, oldModel);
+        }
+        foreach (var toRevert in revertChanges.Concat(newTerrains)) {
+            var terrainViewModel = terrains.First(x => x.Id == toRevert.FileLoadGuid);
+            
+            if (toRevert.Wall is not null) {
+                terrainViewModel.HasWall = true;
+                terrainViewModel.Wall!.FillTransparency = toRevert.Wall.Opacity / 100.0;
+            } else {
+                terrainViewModel.HasWall = false;
+            }
+            if (toRevert.Floor is not null) {
+                terrainViewModel.HasFloor = true;
+                terrainViewModel.Floor!.FillTransparency = toRevert.Floor.Opacity / 100.0;
+            } else {
+                terrainViewModel.HasFloor = false;
+            }
+            if (toRevert.Cut is not null) {
+                terrainViewModel.HasCut = true;
+                terrainViewModel.Cut!.FillTransparency = toRevert.Cut.Opacity / 100.0;
+            } else {
+                terrainViewModel.HasCut = false;
+            }
+
+            terrainViewModel.Name = toRevert.Name;
+            terrainViewModel.Color = toRevert.Color;
             if (toRevert.Image is not null) {
                 terrainViewModel.ImageSelectorViewModel.SelectedTileSet = toRevert.Image.TileSetPath;
                 terrainViewModel.ImageSelectorViewModel.X = toRevert.Image.x;
@@ -132,7 +143,13 @@ internal sealed partial class TerrainsViewModel : ViewModel<TerrainsFile, Terrai
     }
 
     private static Terrain ToModelTerrain(TerranViewModel x) {
-        return new Terrain(x.Name, x.Type, x.Color, (int)(x.FillTransparency * 100), x.ImageSelectorViewModel.SelectedTileSet is not null ? new TileImage(x.ImageSelectorViewModel.SelectedTileSet, x.ImageSelectorViewModel.X, x.ImageSelectorViewModel.Y) : null) { FileLoadGuid = x.Id };
+        Terrain terrain = new Terrain(x.Name, x.ImageSelectorViewModel.SelectedTileSet is not null ? new TileImage(x.ImageSelectorViewModel.SelectedTileSet, x.ImageSelectorViewModel.X, x.ImageSelectorViewModel.Y) : null,
+            x.Color,
+            x.Floor is null ? null : new((int)(x.Floor.FillTransparency * 100)),
+            x.Wall is null ? null : new((int)(x.Wall.FillTransparency * 100)),
+            x.Cut is null ? null : new((int)(x.Cut.FillTransparency * 100))
+            ) { FileLoadGuid = x.Id };
+        return terrain;
     }
 
     protected override async Task SaveValuesToModel() {

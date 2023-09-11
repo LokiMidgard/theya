@@ -40,8 +40,7 @@ internal partial class TerrainsFile : JsonProjectItem<TerrainsFile>, IProjectIte
 
 internal record TileImage(string TileSetPath, int x, int y);
 
-internal record Terrain(string Name, TerranType Type, TerrainColor Color, int Opacity, TileImage? Image) {
-
+internal record Terrain(string Name, TileImage? Image, TerrainColor Color, TerrainForm? Floor, TerrainForm? Wall, TerrainForm? Cut) {
     private Guid? guid;
     /// <summary>
     /// Used to identify changes on a Model. If Every Value is changed and maybe the position, we still need to find the original file.
@@ -74,7 +73,7 @@ internal record Terrain(string Name, TerranType Type, TerrainColor Color, int Op
     }
 
 }
-
+internal record TerrainForm(int Opacity);
 internal record TerrainColor(string Color) {
     public static implicit operator Color(TerrainColor color) { return color.Color.ToColor(); }
     public static implicit operator TerrainColor(Color color) { return new(color.ToHex()); }

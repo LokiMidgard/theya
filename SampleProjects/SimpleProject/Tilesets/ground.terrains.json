@@ -2,26 +2,33 @@
   "Terrains": [
     {
       "Name": "Grass",
-      "Color": {
-        "Color": "#FF1BA32D"
-      },
-      "Opacity": 55,
       "Image": {
         "TileSetPath": "Tilesets/UnderWorld.tileset.json",
         "x": 21,
         "y": 5
+      },
+      "Color": {
+        "Color": "#FF1BA32D"
+      },
+      "Floor": {
+        "Opacity": 80
+      },
+      "Wall": {
+        "Opacity": 50
       }
     },
     {
       "Name": "Water",
-      "Color": {
-        "Color": "#FF14759C"
-      },
-      "Opacity": 50,
       "Image": {
         "TileSetPath": "Tilesets/UnderWorld.tileset.json",
         "x": 9,
         "y": 14
+      },
+      "Color": {
+        "Color": "#FF20679C"
+      },
+      "Floor": {
+        "Opacity": 25
       }
     }
   ]

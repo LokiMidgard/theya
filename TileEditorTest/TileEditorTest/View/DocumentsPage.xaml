@@ -6,7 +6,10 @@
     xmlns:local="using:TileEditorTest"
     xmlns:viewControls="using:TileEditorTest.View.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:model="using:TileEditorTest.Model" xmlns:controlsComunity="using:CommunityToolkit.WinUI.UI.Controls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:model="using:TileEditorTest.Model" 
+    xmlns:controlsComunity="using:CommunityToolkit.WinUI.Controls"
+    xmlns:controlsComunityOld="using:CommunityToolkit.WinUI.UI.Controls"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" >
 
@@ -14,27 +17,27 @@
 
         <controlsComunity:DockPanel  x:Name="dock" >
 
-            <controlsComunity:TabbedCommandBar x:Name="commandBar" controlsComunity:DockPanel.Dock="Top" IsPaneOpen="False" SizeChanged="TabbedCommandBar_SizeChanged" >
+            <controlsComunityOld:TabbedCommandBar x:Name="commandBar" controlsComunity:DockPanel.Dock="Top" IsPaneOpen="False" SizeChanged="TabbedCommandBar_SizeChanged" >
                 <!--<controlsComunity:TabbedCommandBar.PaneFooter>
                 </controlsComunity:TabbedCommandBar.PaneFooter>-->
-                <controlsComunity:TabbedCommandBar.PaneCustomContent>
+                <controlsComunityOld:TabbedCommandBar.PaneCustomContent>
                     <Border x:Name="AppTitleBar" HorizontalAlignment="Stretch"  Background="Transparent" VerticalAlignment="Top"  Height="38" >
                   
                     </Border>
-                </controlsComunity:TabbedCommandBar.PaneCustomContent>
-                <controlsComunity:TabbedCommandBar.MenuItems>
+                </controlsComunityOld:TabbedCommandBar.PaneCustomContent>
+                <controlsComunityOld:TabbedCommandBar.MenuItems>
                     <!--<controlsComunity:TabbedCommandBarItem Header="Common">
                      
                 </controlsComunity:TabbedCommandBarItem>-->
-                </controlsComunity:TabbedCommandBar.MenuItems>
-                <controlsComunity:TabbedCommandBar.PaneHeader>
+                </controlsComunityOld:TabbedCommandBar.MenuItems>
+                <controlsComunityOld:TabbedCommandBar.PaneHeader>
                     <CommandBar Background="Transparent" DefaultLabelPosition="Right" >
                         <AppBarButton IsHitTestVisible="False" Visibility="{x:Bind IndentMenu, Converter={StaticResource BoolVisibilityConverter}}"></AppBarButton>
                         <AppBarButton Label="Save" Command="{x:Bind SelectedViewLoader.ContentViewModel.Save, Mode=OneWay}" Icon="Save"  Visibility="{x:Bind SelectedViewLoader.ContentViewModel.Save, Mode=OneWay, FallbackValue=Collapsed,  Converter={StaticResource NullToHiddenConverter}}"/>
                     </CommandBar>
-                </controlsComunity:TabbedCommandBar.PaneHeader>
+                </controlsComunityOld:TabbedCommandBar.PaneHeader>
 
-            </controlsComunity:TabbedCommandBar>
+            </controlsComunityOld:TabbedCommandBar>
 
 
             <TabView x:Name="Tabs" AllowDropTabs="True" CanReorderTabs="True" CanDragTabs="True"   IsAddTabButtonVisible="False"

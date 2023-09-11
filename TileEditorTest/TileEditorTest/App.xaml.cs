@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Common.Collections;
 using CommunityToolkit.WinUI.UI;
 
+using Microsoft.Toolkit.Collections;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
