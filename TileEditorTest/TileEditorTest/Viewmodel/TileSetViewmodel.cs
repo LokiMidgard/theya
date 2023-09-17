@@ -1,5 +1,14 @@
-﻿using InterfaceGenerator;
+﻿
+using InterfaceGenerator;
 
+using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Effects;
+using Microsoft.Graphics.Canvas.Geometry;
+using Microsoft.Graphics.Canvas.Text;
+using Microsoft.Graphics.Canvas.UI.Composition;
+using Microsoft.Graphics.DirectX;
+using Microsoft.UI;
+using Microsoft.UI.Composition;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -14,6 +23,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Numerics;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -23,8 +34,11 @@ using TileEditorTest.View;
 using TileEditorTest.View.Controls;
 using TileEditorTest.ViewModel.Controls;
 
-using Windows.System.Threading;
 using Windows.UI;
+
+using static TileEditorTest.ViewModel.TerranFormViewModel;
+
+using Window = Microsoft.UI.Xaml.Window;
 
 namespace TileEditorTest.ViewModel;
 
@@ -232,13 +246,46 @@ public sealed partial class TerranViewModel : IAsyncDisposable {
         return ImageSelectorViewModel.DisposeAsync();
     }
 }
+
+public enum FillType {
+    Solid,
+    Doted,
+    Lines
+}
+
+
 public sealed partial class TerranFormViewModel {
+    [Notify]
+    private FillType fillType = FillType.Solid;
     [Notify]
     private double fillTransparency = 0.5;
     [Notify(global::PropertyChanged.SourceGenerator.Setter.Private)]
     private Color stroke;
     [Notify(global::PropertyChanged.SourceGenerator.Setter.Private)]
-    private Color fill;
+    private Brush fill;
+
+    [Notify(global::PropertyChanged.SourceGenerator.Setter.Private)]
+    private bool isEnabled;
+
+    public DotBrushViewModel DotBrushConfiguration { get; } = new();
+    public LineBrushViewModel LineBrushConfiguration { get; } = new();
+
+    public partial class DotBrushViewModel {
+        [Notify]
+        private double radius = 8;
+        [Notify]
+        private double distance = 4;
+    }
+    public partial class LineBrushViewModel {
+
+
+        [Notify]
+        private double thickness = 4;
+        [Notify]
+        private double distance = 4;
+        [Notify]
+        private double angle = 4;
+    }
 
     public TerranType Type { get; }
     public TerranViewModel Parent { get; }
@@ -247,23 +294,305 @@ public sealed partial class TerranFormViewModel {
         Type = type;
         Parent = parent;
         parent.PropertyChanged += Parent_PropertyChanged;
+        OnColorChanged();
+        this.DotBrushConfiguration.PropertyChanged += (sender, e) => {
+            if (this.Fill is DotBrush dotBrush) {
+                OnColorChanged();
+            }
+        };
+        this.LineBrushConfiguration.PropertyChanged += (sender, e) => {
+            if (this.Fill is LineBrush dotBrush) {
+                OnColorChanged();
+            }
+        };
+
     }
 
     private void Parent_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
         if (e.PropertyName == nameof(Parent.Color)) {
             OnColorChanged();
         }
+        if (this.Type == TerranType.Cut && e.PropertyName == nameof(Parent.HasCut)
+|| this.Type == TerranType.Floor && e.PropertyName == nameof(Parent.HasFloor)
+|| this.Type == TerranType.Wall && e.PropertyName == nameof(Parent.HasWall)
+            ) {
+            this.IsEnabled = this.Type switch {
+                TerranType.Cut => Parent.HasCut,
+                TerranType.Floor => Parent.HasFloor,
+                TerranType.Wall => Parent.HasWall,
+                _ => false
+            };
+        }
     }
 
     private void OnFillTransparencyChanged() {
         OnColorChanged();
     }
+    private void OnFillTypeChanged() {
+        OnColorChanged();
+    }
+
     private void OnColorChanged() {
         var color = Parent.Color;
         this.Stroke = color;
-        this.Fill = Color.FromArgb((byte)(255 * fillTransparency), color.R, color.G, color.B);
+        Color fillColor = Color.FromArgb((byte)(255 * fillTransparency), color.R, color.G, color.B);
+        this.Fill = this.FillType switch {
+            FillType.Solid => new SolidColorBrush() { Color = fillColor },
+            FillType.Doted => new DotBrush() { Color = fillColor, Distance = this.DotBrushConfiguration.Distance, Radius = this.DotBrushConfiguration.Radius },
+            FillType.Lines => new LineBrush() { Color = fillColor, Configuration = this.LineBrushConfiguration },
+            _ => throw new NotImplementedException()
+        };
     }
 
+}
+
+
+public partial class DotBrush : XamlCompositionBrushBase {
+    public required Color Color { get; init; }
+    public required double Radius { get; init; }
+    public required double Distance { get; init; }
+    protected Compositor _compositor => App.Current.MainWindow.Compositor;
+
+    protected CompositionBrush? _imageBrush = null;
+
+    protected IDisposable? _surfaceSource = null;
+
+    protected override void OnConnected() {
+        base.OnConnected();
+
+        if (CompositionBrush == null) {
+            CreateEffectBrush();
+            Render();
+        }
+    }
+
+    protected override void OnDisconnected() {
+        base.OnDisconnected();
+        this.CompositionBrush?.Dispose();
+        this.CompositionBrush = null;
+        ClearResources();
+    }
+
+    private void ClearResources() {
+        _imageBrush?.Dispose();
+        _imageBrush = null;
+
+        _surfaceSource?.Dispose();
+        _surfaceSource = null;
+    }
+
+    private void UpdateBrush() {
+        if (CompositionBrush != null && _imageBrush != null) {
+            ((CompositionEffectBrush)CompositionBrush).SetSourceParameter(nameof(BorderEffect.Source), _imageBrush);
+        }
+    }
+
+    protected ICompositionSurface CreateSurface() {
+        double width = Distance + Radius * 2;
+        double height = width;
+
+        CanvasDevice device = CanvasDevice.GetSharedDevice();
+        var graphicsDevice = CanvasComposition.CreateCompositionGraphicsDevice(_compositor, device);
+        var drawingSurface = graphicsDevice.CreateDrawingSurface(
+            new(width, height),
+            DirectXPixelFormat.B8G8R8A8UIntNormalized,
+            DirectXAlphaMode.Premultiplied);
+
+        /* Create Drawing Session is not thread safe - only one can ever be active at a time per app */
+        using (var ds = CanvasComposition.CreateDrawingSession(drawingSurface)) {
+            ds.Clear(Colors.Transparent);
+            var centerPoint = (float)(Radius + Distance / 2);
+            ds.FillCircle(centerPoint, centerPoint, (float)Radius, this.Color);
+        }
+
+        return drawingSurface;
+    }
+
+    private void Render() {
+        ClearResources();
+
+        try {
+            var src = CreateSurface();
+            _surfaceSource = src as IDisposable;
+            var surfaceBrush = _compositor.CreateSurfaceBrush(src);
+            surfaceBrush.VerticalAlignmentRatio = 0.0f;
+            surfaceBrush.HorizontalAlignmentRatio = 0.0f;
+            surfaceBrush.Stretch = CompositionStretch.None;
+            _imageBrush = surfaceBrush;
+
+            UpdateBrush();
+        } catch {
+            // no image for you, soz.
+        }
+    }
+
+    private void CreateEffectBrush() {
+        using (var effect = new BorderEffect {
+            Name = nameof(BorderEffect),
+            ExtendY = CanvasEdgeBehavior.Wrap,
+            ExtendX = CanvasEdgeBehavior.Wrap,
+            Source = new CompositionEffectSourceParameter(nameof(BorderEffect.Source))
+        })
+        using (var _effectFactory = _compositor.CreateEffectFactory(effect)) {
+            this.CompositionBrush = _effectFactory.CreateBrush();
+        }
+    }
+}
+
+public partial class LineBrush : XamlCompositionBrushBase {
+    public required Color Color { get; init; }
+    public required LineBrushViewModel Configuration { get; init; }
+    protected Compositor _compositor => App.Current.MainWindow.Compositor;
+
+    protected CompositionBrush? _imageBrush = null;
+
+    protected IDisposable? _surfaceSource = null;
+
+    protected override void OnConnected() {
+        base.OnConnected();
+
+        if (CompositionBrush == null) {
+            CreateEffectBrush();
+            Render();
+        }
+    }
+
+    protected override void OnDisconnected() {
+        base.OnDisconnected();
+        this.CompositionBrush?.Dispose();
+        this.CompositionBrush = null;
+        ClearResources();
+    }
+
+    private void ClearResources() {
+        _imageBrush?.Dispose();
+        _imageBrush = null;
+
+        _surfaceSource?.Dispose();
+        _surfaceSource = null;
+    }
+
+    private void UpdateBrush() {
+        if (CompositionBrush != null && _imageBrush != null) {
+            ((CompositionEffectBrush)CompositionBrush).SetSourceParameter(nameof(BorderEffect.Source), _imageBrush);
+        }
+    }
+
+    protected ICompositionSurface CreateSurface() {
+
+        float angle = (float)Configuration.Angle;
+        bool mirrow = false;
+        if (angle > 90) {
+            angle = 90 - (angle - 90);
+            mirrow = true;
+        }
+
+        var radians = angle * MathF.PI / 180;
+        float baseSize = (float)((Configuration.Thickness) + Configuration.Distance) * 2;
+        float width;
+        float height;
+        if (Configuration.Angle is 0 or 90 or 180) {
+            width = baseSize;
+            height = baseSize;
+        } else {
+            //if (factor < 1) {
+            //factor = 1 / factor;
+            //width = baseSize ;
+            //height = baseSize * factor;
+            //} else {
+            //var factor = MathF.Cos(radians) / MathF.Sin(radians);
+            var widthModifire = MathF.Cos(radians);
+            while (widthModifire < 1) {
+                if (widthModifire == 0) {
+                    widthModifire = 1;
+                }
+                widthModifire *= 2;
+            }
+            var heightModifire = MathF.Sin(radians);
+            while (heightModifire < 1) {
+                if (heightModifire == 0) {
+                    heightModifire = 1;
+                }
+                heightModifire *= 2;
+            }
+            width = baseSize * widthModifire;
+            height = baseSize * heightModifire;
+            //}
+
+        }
+
+        CanvasDevice device = CanvasDevice.GetSharedDevice();
+        var graphicsDevice = CanvasComposition.CreateCompositionGraphicsDevice(_compositor, device);
+        var drawingSurface = graphicsDevice.CreateDrawingSurface(
+            new(width, height),
+            DirectXPixelFormat.B8G8R8A8UIntNormalized,
+            DirectXAlphaMode.Premultiplied);
+
+
+        //Vector2 direction = new(MathF.Cos(radians), MathF.Sin(radians));
+
+        /* Create Drawing Session is not thread safe - only one can ever be active at a time per app */
+        using (var ds = CanvasComposition.CreateDrawingSession(drawingSurface)) {
+            ds.Clear(Colors.Transparent);
+            ds.Transform = Matrix3x2.CreateRotation(radians, new(width / 2, height / 2)) * (mirrow ? Matrix3x2.CreateScale(-1, 1) : Matrix3x2.Identity);
+            CanvasStrokeStyle strokeStyle = new CanvasStrokeStyle() { };
+
+            bool skipFirst = true;
+            for (float y = height / 2; y < height * 2; y += (float)(Configuration.Thickness + Configuration.Distance)) {
+                //if (skipFirst) {
+                //    ds.DrawLine(-width, y, width * 2, y, Color.FromArgb(255, 255, 0, 0), (float)Configuration.Thickness, strokeStyle);
+                //    skipFirst = false;
+                //    continue;
+                //}
+
+                ds.DrawLine(-width, y, width * 2, y, Color, (float)Configuration.Thickness, strokeStyle);
+            }
+            skipFirst = true;
+            for (float y = height / 2; y > -height * 2; y -= (float)(Configuration.Thickness + Configuration.Distance)) {
+                if (skipFirst) {
+                    skipFirst = false;
+                    continue;
+                }
+                ds.DrawLine(-width, y, width * 2, y, Color, (float)Configuration.Thickness, strokeStyle);
+            }
+
+        }
+
+        return drawingSurface;
+
+
+
+    }
+
+    private void Render() {
+        ClearResources();
+
+        try {
+            var src = CreateSurface();
+            _surfaceSource = src as IDisposable;
+            var surfaceBrush = _compositor.CreateSurfaceBrush(src);
+            surfaceBrush.VerticalAlignmentRatio = 0.0f;
+            surfaceBrush.HorizontalAlignmentRatio = 0.0f;
+            surfaceBrush.Stretch = CompositionStretch.None;
+            _imageBrush = surfaceBrush;
+
+            UpdateBrush();
+        } catch {
+            // no image for you, soz.
+        }
+    }
+
+    private void CreateEffectBrush() {
+        using (var effect = new BorderEffect {
+            Name = nameof(BorderEffect),
+            ExtendY = CanvasEdgeBehavior.Wrap,
+            ExtendX = CanvasEdgeBehavior.Wrap,
+            Source = new CompositionEffectSourceParameter(nameof(BorderEffect.Source))
+        })
+        using (var _effectFactory = _compositor.CreateEffectFactory(effect)) {
+            this.CompositionBrush = _effectFactory.CreateBrush();
+        }
+    }
 }
 
 public partial class TileSetViewModel : ViewModel<TileSetFile, TileSetViewModel>, IViewModel<TileSetFile, TileSetViewModel>, IAsyncDisposable {

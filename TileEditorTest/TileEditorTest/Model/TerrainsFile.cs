@@ -7,7 +7,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Formats.Asn1;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -73,7 +77,17 @@ internal record Terrain(string Name, TileImage? Image, TerrainColor Color, Terra
     }
 
 }
-internal record TerrainForm(int Opacity);
+internal record TerrainForm(int Opacity, TerrainDisplay Display);
+
+[JsonDerivedType(typeof(TerrainDisplaySolid), "solid")]
+[JsonDerivedType(typeof(TerrainDisplayDot), "dot")]
+[JsonDerivedType(typeof(TerrainDisplayLine), "line")]
+internal abstract record TerrainDisplay;
+internal record TerrainDisplaySolid : TerrainDisplay;
+internal record TerrainDisplayDot(double Radius, double Distance) : TerrainDisplay;
+internal record TerrainDisplayLine(double Angle, double Thickness, double Distance) : TerrainDisplay;
+
+
 internal record TerrainColor(string Color) {
     public static implicit operator Color(TerrainColor color) { return color.Color.ToColor(); }
     public static implicit operator TerrainColor(Color color) { return new(color.ToHex()); }

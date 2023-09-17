@@ -36,13 +36,11 @@
                         <DataTemplate x:DataType="local:TerrainData">
                             <Path HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch"
-                          Opacity="0.5"
+                   
                           StrokeThickness="{StaticResource strokeThickness}"  
                           Data="{x:Bind Path}"
+                                  Fill="{x:Bind  Model.Fill,Mode=OneWay}"
                           >
-                                <Path.Fill>
-                                    <SolidColorBrush Color="{x:Bind  Model.Fill,Mode=OneWay}"  />
-                                </Path.Fill>
                                 <Path.Stroke>
                                     <SolidColorBrush Color="{x:Bind Model.Stroke,Mode=OneWay}"  />
                                 </Path.Stroke>

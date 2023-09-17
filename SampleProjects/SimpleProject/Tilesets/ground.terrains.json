@@ -11,10 +11,18 @@
         "Color": "#FF1BA32D"
       },
       "Floor": {
-        "Opacity": 80
+        "Opacity": 85,
+        "Display": {
+          "$type": "solid"
+        }
       },
       "Wall": {
-        "Opacity": 50
+        "Opacity": 50,
+        "Display": {
+          "$type": "line",
+          "Thickness": 4,
+          "Distance": 4
+        }
       }
     },
     {
@@ -28,7 +36,10 @@
         "Color": "#FF20679C"
       },
       "Floor": {
-        "Opacity": 25
+        "Opacity": 25,
+        "Display": {
+          "$type": "solid"
+        }
       }
     }
   ]

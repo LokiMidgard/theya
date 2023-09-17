@@ -82,7 +82,7 @@ internal sealed partial class TerrainsViewModel : ViewModel<TerrainsFile, Terrai
         }
         foreach (var toRevert in revertChanges.Concat(newTerrains)) {
             var terrainViewModel = terrains.First(x => x.Id == toRevert.FileLoadGuid);
-            
+
             if (toRevert.Wall is not null) {
                 terrainViewModel.HasWall = true;
                 terrainViewModel.Wall!.FillTransparency = toRevert.Wall.Opacity / 100.0;
@@ -145,11 +145,21 @@ internal sealed partial class TerrainsViewModel : ViewModel<TerrainsFile, Terrai
     private static Terrain ToModelTerrain(TerranViewModel x) {
         Terrain terrain = new Terrain(x.Name, x.ImageSelectorViewModel.SelectedTileSet is not null ? new TileImage(x.ImageSelectorViewModel.SelectedTileSet, x.ImageSelectorViewModel.X, x.ImageSelectorViewModel.Y) : null,
             x.Color,
-            x.Floor is null ? null : new((int)(x.Floor.FillTransparency * 100)),
-            x.Wall is null ? null : new((int)(x.Wall.FillTransparency * 100)),
-            x.Cut is null ? null : new((int)(x.Cut.FillTransparency * 100))
+            x.Floor is null ? null : ToFormModel(x.Floor),
+            x.Wall is null ? null : ToFormModel(x.Wall),
+            x.Cut is null ? null : ToFormModel(x.Cut)
             ) { FileLoadGuid = x.Id };
         return terrain;
+    }
+
+    private static TerrainForm ToFormModel(TerranFormViewModel x) {
+
+        return new((int)(x.FillTransparency * 100), x.FillType switch {
+            FillType.Solid => new TerrainDisplaySolid(),
+            FillType.Doted => new TerrainDisplayDot(x.DotBrushConfiguration.Radius, x.DotBrushConfiguration.Distance),
+            FillType.Lines => new TerrainDisplayLine(x.LineBrushConfiguration.Angle, x.LineBrushConfiguration.Thickness, x.LineBrushConfiguration.Distance),
+            _ => throw new NotImplementedException(x.FillType.ToString())
+        });
     }
 
     protected override async Task SaveValuesToModel() {

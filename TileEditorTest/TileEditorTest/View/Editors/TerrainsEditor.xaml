@@ -5,9 +5,63 @@
              xmlns:controls1="using:TileEditorTest.View.Controls"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="using:TileEditorTest.View.Editors"
+             xmlns:ui="using:CommunityToolkit.WinUI"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewmodel="using:TileEditorTest.ViewModel"
              mc:Ignorable="d">
+    <UserControl.Resources>
+        <DataTemplate x:Key="TerranFormSettings"
+                      x:DataType="viewmodel:TerranFormViewModel">
+            <StackPanel>
+                <TextBlock Margin="8,8,8,4"
+                           Text="Editor Fill Opacity" />
+                <Slider Margin="8,-6,8,0"
+                        LargeChange="0.1"
+                        Maximum="1"
+                        IsEnabled="{x:Bind IsEnabled,Mode=OneWay}"
+                        SmallChange="0.01"
+                        SnapsTo="Ticks"
+                        ThumbToolTipValueConverter="{StaticResource PercentageConverter}"
+                        TickFrequency="0.05"
+                        TickPlacement="Inline"
+                        Value="{x:Bind FillTransparency, Mode=TwoWay}" />
+                <ComboBox IsEnabled="{x:Bind IsEnabled,Mode=OneWay}"
+                          ItemsSource="{ui:EnumValues Type=viewmodel:FillType }"
+                          SelectedItem="{x:Bind FillType, Mode=TwoWay}"></ComboBox>
+
+                <controls:SwitchPresenter TargetType="viewmodel:FillType"
+                                          Value="{x:Bind FillType, Mode=OneWay}">
+                    <controls:Case Value="Solid"></controls:Case>
+                    <controls:Case Value="Doted">
+                        <StackPanel>
+                            <TextBlock Text="Radius" />
+                            <Slider IsEnabled="{x:Bind IsEnabled,Mode=OneWay}"
+                                    Value="{x:Bind DotBrushConfiguration.Radius , Mode=TwoWay}" />
+                            <TextBlock Text="Distance" />
+                            <Slider IsEnabled="{x:Bind IsEnabled,Mode=OneWay}"
+                                    Value="{x:Bind DotBrushConfiguration.Distance, Mode=TwoWay}" />
+                        </StackPanel>
+                    </controls:Case>
+                    <controls:Case Value="Lines">
+                        <StackPanel>
+                            <TextBlock Text="Thickness" />
+                            <Slider IsEnabled="{x:Bind IsEnabled,Mode=OneWay}"
+                                    Value="{x:Bind LineBrushConfiguration.Thickness, Mode=TwoWay}" />
+                            <TextBlock Text="Distance" />
+                            <Slider IsEnabled="{x:Bind IsEnabled,Mode=OneWay}"
+                                    Value="{x:Bind LineBrushConfiguration.Distance, Mode=TwoWay}" />
+                            <TextBlock Text="Angle" />
+                            <Slider IsEnabled="{x:Bind IsEnabled,Mode=OneWay}"
+                                    Minimum="0"
+                                    Maximum="180"
+                                    Value="{x:Bind LineBrushConfiguration.Angle, Mode=TwoWay}" />
+                        </StackPanel>
+                    </controls:Case>
+                </controls:SwitchPresenter>
+            </StackPanel>
+
+        </DataTemplate>
+    </UserControl.Resources>
 
     <controls:ListDetailsView ItemsSource="{x:Bind ViewModel.Terrains, Mode=OneWay}">
         <controls:ListDetailsView.ListHeader>
@@ -80,20 +134,9 @@
                                     <ToggleSwitch IsOn="{x:Bind HasFloor, Mode=TwoWay}" />
                                 </StackPanel>
                             </Expander.Header>
-                            <StackPanel>
-                                <TextBlock Margin="8,8,8,4"
-                                           Text="Editor Fill Opacity" />
-                                <Slider Margin="8,-6,8,0"
-                                        IsEnabled="{x:Bind HasFloor, Mode=OneWay}"
-                                        LargeChange="0.1"
-                                        Maximum="1"
-                                        SmallChange="0.01"
-                                        SnapsTo="Ticks"
-                                        ThumbToolTipValueConverter="{StaticResource PercentageConverter}"
-                                        TickFrequency="0.05"
-                                        TickPlacement="Inline"
-                                        Value="{x:Bind Floor.FillTransparency, Mode=TwoWay}" />
-                            </StackPanel>
+                            <ContentControl ContentTemplate="{StaticResource TerranFormSettings}"
+                                            Content="{x:Bind Floor,Mode=OneWay}"
+                                            IsEnabled="{x:Bind HasFloor,Mode=OneWay}" />
                         </Expander>
                         <Expander>
                             <Expander.Header>
@@ -103,20 +146,9 @@
                                 </StackPanel>
                             </Expander.Header>
 
-                            <StackPanel>
-                                <TextBlock Margin="8,8,8,4"
-                                           Text="Editor Fill Opacity" />
-                                <Slider Margin="8,-6,8,0"
-                                        IsEnabled="{x:Bind HasWall, Mode=OneWay}"
-                                        LargeChange="0.1"
-                                        Maximum="1"
-                                        SmallChange="0.01"
-                                        SnapsTo="Ticks"
-                                        ThumbToolTipValueConverter="{StaticResource PercentageConverter}"
-                                        TickFrequency="0.05"
-                                        TickPlacement="Inline"
-                                        Value="{x:Bind Wall.FillTransparency, Mode=TwoWay}" />
-                            </StackPanel>
+                            <ContentControl ContentTemplate="{StaticResource TerranFormSettings}"
+                                            Content="{x:Bind Wall,Mode=OneWay}"
+                                            IsEnabled="{x:Bind HasWall,Mode=OneWay}" />
                         </Expander>
                         <Expander>
                             <Expander.Header>
@@ -126,20 +158,9 @@
                                 </StackPanel>
                             </Expander.Header>
 
-                            <StackPanel>
-                                <TextBlock Margin="8,8,8,4"
-                                           Text="Editor Fill Opacity" />
-                                <Slider Margin="8,-6,8,0"
-                                        IsEnabled="{x:Bind HasCut, Mode=OneWay}"
-                                        LargeChange="0.1"
-                                        Maximum="1"
-                                        SmallChange="0.01"
-                                        SnapsTo="Ticks"
-                                        ThumbToolTipValueConverter="{StaticResource PercentageConverter}"
-                                        TickFrequency="0.05"
-                                        TickPlacement="Inline"
-                                        Value="{x:Bind Cut.FillTransparency, Mode=TwoWay}" />
-                            </StackPanel>
+                            <ContentControl ContentTemplate="{StaticResource TerranFormSettings}"
+                                            Content="{x:Bind Cut,Mode=OneWay}"
+                                            IsEnabled="{x:Bind HasCut,Mode=OneWay}" />
                         </Expander>
 
                         <ContentDialog CloseButtonText="Close">
